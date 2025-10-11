@@ -230,10 +230,79 @@
             cursor: not-allowed;
         }
         
-        .key-management {
+        /* Tab切换样式 */
+        .tab-container {
+            display: flex;
+            flex-direction: column;
             margin-top: 20px;
-            padding: 15px 10px 10px;
             border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 0;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .tab-header {
+            display: flex;
+            gap: 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px 10px 0 0;
+            padding: 5px;
+            margin: 0;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 15px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 15px 10px 10px;
+            animation: fadeIn 0.3s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            min-height: 0;
+            flex-direction: column;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .key-management {
+            padding: 0;
         }
         
         .key-info {
@@ -443,6 +512,249 @@
             }
         }
 
+        /* ========================
+         * 群管理功能样式
+         * ======================== */
+
+        /* 角色徽章 */
+        .role-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            margin-left: 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: bold;
+            vertical-align: middle;
+        }
+
+        .role-creator {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .role-admin {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .role-user {
+            background: #3498db;
+            color: white;
+        }
+
+        .role-guest {
+            background: #95a5a6;
+            color: white;
+        }
+
+        /* 用户信息容器 */
+        .user-info-container {
+            flex: 1;
+        }
+
+        /* 用户操作按钮 */
+        .user-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .action-btn {
+            padding: 4px 10px;
+            font-size: 0.75em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            color: white;
+        }
+
+        .kick-btn {
+            background: var(--warning);
+        }
+
+        .kick-btn:hover {
+            background: #e67e22;
+        }
+
+        .ban-btn {
+            background: var(--danger);
+        }
+
+        .ban-btn:hover {
+            background: #c0392b;
+        }
+
+        .transfer-btn {
+            background: #9b59b6;
+        }
+
+        .transfer-btn:hover {
+            background: #8e44ad;
+        }
+
+        .role-select {
+            padding: 4px 8px;
+            font-size: 0.75em;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+
+        .role-select option {
+            background: var(--dark);
+            color: white;
+        }
+
+        /* 管理面板 */
+        .admin-management {
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        .admin-section {
+            margin-bottom: 20px;
+            padding: 15px 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .admin-section h3 {
+            font-size: 1em;
+            margin-bottom: 12px;
+            color: #4ec9b0;
+        }
+
+        .admin-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .admin-btn:hover {
+            background: var(--secondary);
+        }
+
+        /* 邀请表单 */
+        .invite-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .admin-select,
+        .admin-input {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            font-size: 0.85em;
+        }
+
+        .admin-select option {
+            background: var(--dark);
+            color: white;
+        }
+
+        .admin-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* 邀请链接列表 */
+        .invite-list,
+        .ban-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .invite-item,
+        .ban-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .invite-info,
+        .ban-info {
+            margin-bottom: 8px;
+        }
+
+        .invite-url {
+            font-size: 0.75em;
+            color: #4ec9b0;
+            word-break: break-all;
+            margin-bottom: 5px;
+            font-family: monospace;
+        }
+
+        .invite-meta,
+        .ban-meta {
+            font-size: 0.7em;
+            color: #aaa;
+        }
+
+        .invite-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .invite-actions button,
+        .ban-item button {
+            flex: 1;
+            padding: 5px 10px;
+            font-size: 0.75em;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .invite-actions button:hover,
+        .ban-item button:hover {
+            background: var(--secondary);
+        }
+
+        /* 隐私表单 */
+        .privacy-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .privacy-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+
+        .privacy-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .privacy-label span {
+            user-select: none;
+        }
+
     </style>
 </head>
 <body>
@@ -461,20 +773,86 @@
                     等待连接...
                 </div>
             </div>
-            <div class="key-management">
-                <h3>密钥管理</h3>
-                <div class="key-info">
-                    <div>你的密钥ID:</div>
-                    <div id="keyId" class="key-id">未注册</div>
+
+            <!-- Tab切换区域 -->
+            <div class="tab-container">
+                <div class="tab-header">
+                    <button class="tab-btn active" data-tab="keyManagement">密钥管理</button>
+                    <button class="tab-btn" data-tab="roomSettings">房间设置</button>
                 </div>
-                <div class="key-buttons">
-                    <button id="importPublicKey">导入公钥</button>
-                    <button id="importPrivateKey">导入私钥</button>
-                    <button id="copyPublicKey">复制公钥</button>
-                    <button id="generateKeys">生成密钥</button>
+
+                <!-- 密钥管理Tab -->
+                <div class="tab-content active" id="keyManagement">
+                    <div class="key-management">
+                        <div class="key-info">
+                            <div>你的密钥ID:</div>
+                            <div id="keyId" class="key-id">未注册</div>
+                        </div>
+                        <div class="key-buttons">
+                            <button id="importPublicKey">导入公钥</button>
+                            <button id="importPrivateKey">导入私钥</button>
+                            <button id="copyPublicKey">复制公钥</button>
+                            <button id="generateKeys">生成密钥</button>
+                        </div>
+                        <div class="debug-info" id="debugInfo"></div>
+                    </div>
                 </div>
-                <div class="debug-info" id="debugInfo"></div>
+
+                <!-- 房间设置Tab -->
+                <div class="tab-content" id="roomSettings">
+                    <div class="admin-management">
+                <!-- 房间类型转换 -->
+                <div class="admin-section" id="roomTypeSection" style="display:none;">
+                    <h3>房间设置</h3>
+                    <button id="convertRoomTypeBtn" class="admin-btn">转换房间类型</button>
+                </div>
+
+                <!-- 邀请链接生成 -->
+                <div class="admin-section" id="inviteSection" style="display:none;">
+                    <h3>邀请链接</h3>
+                    <div class="invite-form">
+                        <select id="inviteRole" class="admin-select">
+                            <option value="admin">管理员</option>
+                            <option value="user" selected>用户</option>
+                            <option value="guest">访客</option>
+                        </select>
+                        <input type="number" id="inviteExpires" class="admin-input" placeholder="过期时间(小时)" min="1">
+                        <input type="number" id="inviteMaxUsage" class="admin-input" placeholder="最大使用次数" min="1">
+                        <button onclick="generateInviteLink()" class="admin-btn">生成邀请链接</button>
+                    </div>
+                    <div id="inviteList" class="invite-list"></div>
+                </div>
+
+                <!-- 封禁列表 -->
+                <div class="admin-section" id="banListSection" style="display:none;">
+                    <h3>封禁列表</h3>
+                    <div id="banList" class="ban-list"></div>
+                </div>
+
+                <!-- 隐私配置 -->
+                <div class="admin-section" id="privacySection" style="display:none;">
+                    <h3>隐私设置</h3>
+                    <div class="privacy-form">
+                        <label class="privacy-label">
+                            <input type="checkbox" id="guestCanViewMessages" checked>
+                            <span>Guest 可查看消息</span>
+                        </label>
+                        <label class="privacy-label">
+                            <input type="checkbox" id="guestCanViewUserList" checked>
+                            <span>Guest 可查看用户列表</span>
+                        </label>
+                        <label class="privacy-label">
+                            <input type="checkbox" id="requireInviteToJoin">
+                            <span>需要邀请链接才能加入</span>
+                        </label>
+                        <button onclick="updatePrivacyConfig()" class="admin-btn">保存设置</button>
+                    </div>
+                </div>
+                    </div>
+                </div>
+                <!-- 房间设置Tab结束 -->
             </div>
+            <!-- Tab容器结束 -->
         </div>
 
         <div class="panel chat-area">
@@ -503,10 +881,19 @@
         let userEmail = '';
         let websocket = null;
         let roomId = '';
+        let inviteId = ''; // 邀请码
         let users = new Map();
         let reconnectAttempts = 0;
         let maxReconnectAttempts = 5;
         let isMobile = null; // 占位符 具体判断看后面util部分的getter
+
+        // 房间信息
+        let roomInfo = {
+            roomType: 'public',
+            isCreator: false,
+            yourRole: 'user',
+            privacy: null
+        };
 
         // DOM元素
         const userListEl = document.getElementById('userList');
@@ -682,8 +1069,16 @@
         
         function enableUI() {
             if (publicKey) {
-                messageInputEl.disabled = false;
-                sendButtonEl.disabled = false;
+                // 检查是否有发送消息的权限（Guest没有）
+                const canSendMessages = roomInfo.yourRole !== 'guest';
+                messageInputEl.disabled = !canSendMessages;
+                sendButtonEl.disabled = !canSendMessages;
+
+                if (!canSendMessages) {
+                    messageInputEl.placeholder = '访客无法发送消息';
+                } else {
+                    messageInputEl.placeholder = '输入消息...';
+                }
             }
         }
         
@@ -694,17 +1089,21 @@
         
         function registerUser() {
             if (websocket && websocket.readyState === WebSocket.OPEN && publicKey) {
-                debugLog('发送用户注册请求');
-                websocket.send(JSON.stringify({
+                debugLog('发送用户注册请求' + (inviteId ? ' (携带邀请码)' : ''));
+                const registerMsg = {
                     type: 'register',
                     publicKey: publicKey
-                }));
+                };
+                if (inviteId) {
+                    registerMsg.inviteId = inviteId;
+                }
+                websocket.send(JSON.stringify(registerMsg));
             }
         }
         
         function handleWebSocketMessage(data) {
             debugLog('收到消息: ' + data.type);
-            
+
             switch (data.type) {
                 case 'registered':
                 case 'authenticated':
@@ -712,26 +1111,75 @@
                     userName = data.profile.name;
                     userEmail = data.profile.email;
                     keyIdEl.textContent = userId;
-                    showNotification('身份验证成功');
+                    if (data.assignedRole) {
+                        roomInfo.yourRole = data.assignedRole;
+                        showNotification(`身份验证成功，角色: ${getRoleLabel(data.assignedRole)}`);
+                    } else {
+                        showNotification('身份验证成功');
+                    }
                     enableUI();
-                    
+
                     // 请求用户列表
                     websocket.send(JSON.stringify({ type: 'getUsers' }));
                     break;
-                    
+
+                case 'roomInfo':
+                    handleRoomInfo(data);
+                    break;
+
                 case 'encryptedMessage':
                     handleEncryptedMessage(data);
                     break;
-                    
+
                 case 'userList':
                     updateUserList(data.users);
                     break;
-                    
+
+                case 'roomTypeConverted':
+                    handleRoomTypeConverted(data);
+                    break;
+
+                case 'userKicked':
+                    handleUserKicked(data);
+                    break;
+
+                case 'userBanned':
+                    handleUserBanned(data);
+                    break;
+
+                case 'roleChanged':
+                    handleRoleChanged(data);
+                    break;
+
+                case 'inviteLinkGenerated':
+                    handleInviteLinkGenerated(data);
+                    break;
+
+                case 'banList':
+                    handleBanList(data);
+                    break;
+
+                case 'inviteLinks':
+                    handleInviteLinks(data);
+                    break;
+
+                case 'privacyConfigUpdated':
+                    handlePrivacyConfigUpdated(data);
+                    break;
+
+                case 'creatorTransferred':
+                    handleCreatorTransferred(data);
+                    break;
+
+                case 'permissionDenied':
+                    handlePermissionDenied(data);
+                    break;
+
                 case 'error':
                     showNotification(data.message, 'error');
                     debugLog('服务器错误: ' + data.message);
                     break;
-                    
+
                 default:
                     debugLog('未知消息类型: ' + data.type);
             }
@@ -969,16 +1417,21 @@
             }
         }
         
-        // 获取URL中的roomId
-        function getRoomIdFromURL() {
+        // 获取URL参数（支持短参数r和i）
+        function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('room');
+            return {
+                roomId: urlParams.get('r') || urlParams.get('room'), // 支持新旧格式
+                inviteId: urlParams.get('i')
+            };
         }
-        
-        // 更新URL以包含房间ID
+
+        // 更新URL以包含房间ID（使用短参数）
         function updateURLWithRoomId(roomId) {
             const newUrl = new URL(window.location);
-            newUrl.searchParams.set('room', roomId);
+            newUrl.searchParams.set('r', roomId);
+            // 移除旧格式参数
+            newUrl.searchParams.delete('room');
             window.history.replaceState(null, '', newUrl.toString());
         }
 
@@ -1102,14 +1555,531 @@
             messagesEl.scrollTop = messagesEl.scrollHeight;
         }
 
-        
+
+        // ========================
+        // 群管理功能 - 工具函数
+        // ========================
+
+        // 获取角色显示标签
+        function getRoleLabel(role) {
+            const labels = {
+                'creator': '⭐ 创建者',
+                'admin': '🛡️ 管理员',
+                'user': '👤 用户',
+                'guest': '👁️ 访客'
+            };
+            return labels[role] || role;
+        }
+
+        // 获取房间类型标签
+        function getRoomTypeLabel(type) {
+            return type === 'public' ? '公开房间' : '私密房间';
+        }
+
+        // 检查是否有权限
+        function hasPermission(permission) {
+            const permissions = {
+                'creator': ['all'],
+                'admin': ['kick', 'ban', 'changeRole', 'generateInvite', 'viewBanList'],
+                'user': [],
+                'guest': []
+            };
+            const rolePerms = permissions[roomInfo.yourRole] || [];
+            return rolePerms.includes('all') || rolePerms.includes(permission);
+        }
+
+        // ========================
+        // 群管理功能 - 消息处理函数
+        // ========================
+
+        // 处理房间信息
+        function handleRoomInfo(data) {
+            roomInfo = {
+                roomType: data.roomType,
+                isCreator: data.isCreator,
+                yourRole: data.yourRole,
+                privacy: data.privacy
+            };
+            debugLog(`房间信息: ${getRoomTypeLabel(data.roomType)}, 角色: ${getRoleLabel(data.yourRole)}`);
+
+            // 更新UI显示
+            updateUIBasedOnRole();
+
+            // 如果是Private房间且是Admin/Creator，加载管理数据
+            if (data.roomType === 'private' && (data.yourRole === 'admin' || data.yourRole === 'creator')) {
+                getBanList();
+                getInviteLinks();
+            }
+        }
+
+        // 处理房间类型转换
+        function handleRoomTypeConverted(data) {
+            const actorName = getUserName(data.convertedBy);
+            showNotification(`${actorName} 将房间转换为 ${getRoomTypeLabel(data.newType)}`);
+
+            // 请求更新房间信息
+            websocket.send(JSON.stringify({ type: 'getUsers' }));
+        }
+
+        // 处理用户被踢出
+        function handleUserKicked(data) {
+            const targetName = getUserName(data.targetUserId);
+            const actorName = getUserName(data.kickedBy);
+            const reason = data.reason ? ` (原因: ${data.reason})` : '';
+
+            showNotification(`${targetName} 被 ${actorName} 踢出房间${reason}`, 'warning');
+
+            // 如果被踢的是自己
+            if (data.targetUserId === userId) {
+                alert(`你已被踢出房间${reason}`);
+                // 可选：重定向到首页
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            }
+
+            // 刷新用户列表
+            websocket.send(JSON.stringify({ type: 'getUsers' }));
+        }
+
+        // 处理用户被封禁
+        function handleUserBanned(data) {
+            const targetName = getUserName(data.targetUserId);
+            const actorName = getUserName(data.bannedBy);
+            const reason = data.reason ? ` (原因: ${data.reason})` : '';
+
+            showNotification(`${targetName} 被 ${actorName} 封禁${reason}`, 'warning');
+
+            // 刷新用户列表和封禁列表
+            websocket.send(JSON.stringify({ type: 'getUsers' }));
+            getBanList();
+        }
+
+        // 处理角色变更
+        function handleRoleChanged(data) {
+            const targetName = getUserName(data.targetUserId);
+            const actorName = getUserName(data.changedBy);
+
+            showNotification(`${actorName} 将 ${targetName} 的角色从 ${getRoleLabel(data.oldRole)} 变更为 ${getRoleLabel(data.newRole)}`);
+
+            // 如果变更的是自己，更新本地角色信息
+            if (data.targetUserId === userId) {
+                roomInfo.yourRole = data.newRole;
+                updateUIBasedOnRole();
+            }
+
+            // 刷新用户列表
+            websocket.send(JSON.stringify({ type: 'getUsers' }));
+        }
+
+        // 处理邀请链接生成
+        function handleInviteLinkGenerated(data) {
+            showNotification('邀请链接已生成');
+
+            // 显示邀请链接
+            const invite = data.invite;
+            const expireText = invite.expiresAt ? new Date(invite.expiresAt).toLocaleString() : '永不过期';
+            const usageText = invite.maxUsage ? `${invite.usageCount}/${invite.maxUsage}` : `${invite.usageCount}/无限`;
+
+            const linkHtml = `
+                <div class="invite-item" data-invite-id="${invite.id}">
+                    <div class="invite-info">
+                        <div class="invite-url" title="${data.fullUrl}">${data.fullUrl}</div>
+                        <div class="invite-meta">
+                            角色: ${getRoleLabel(invite.role)} | 过期: ${expireText} | 使用: ${usageText}
+                        </div>
+                    </div>
+                    <div class="invite-actions">
+                        <button onclick="copyInviteLink('${data.fullUrl}')">复制</button>
+                        <button onclick="deleteInviteLink('${invite.id}')">删除</button>
+                    </div>
+                </div>
+            `;
+
+            const inviteListEl = document.getElementById('inviteList');
+            if (inviteListEl) {
+                inviteListEl.insertAdjacentHTML('afterbegin', linkHtml);
+            }
+        }
+
+        // 处理封禁列表
+        function handleBanList(data) {
+            const banListEl = document.getElementById('banList');
+            if (!banListEl) return;
+
+            banListEl.innerHTML = '';
+
+            if (data.records.length === 0) {
+                banListEl.innerHTML = '<div style="text-align: center; color: #999; padding: 10px;">暂无封禁记录</div>';
+                return;
+            }
+
+            data.records.forEach(record => {
+                const bannedByName = getUserName(record.bannedBy);
+                const banTime = new Date(record.bannedAt).toLocaleString();
+                const reason = record.reason ? ` - ${record.reason}` : '';
+                const typeText = record.type === 'ip' ? 'IP' : '密钥指纹';
+
+                const recordHtml = `
+                    <div class="ban-item">
+                        <div class="ban-info">
+                            <div><strong>${typeText}:</strong> ${record.value}</div>
+                            <div class="ban-meta">封禁者: ${bannedByName} | 时间: ${banTime}${reason}</div>
+                        </div>
+                        <button onclick="unbanUser('${record.type}', '${record.value}')">解封</button>
+                    </div>
+                `;
+
+                banListEl.insertAdjacentHTML('beforeend', recordHtml);
+            });
+        }
+
+        // 处理邀请链接列表
+        function handleInviteLinks(data) {
+            const inviteListEl = document.getElementById('inviteList');
+            if (!inviteListEl) return;
+
+            inviteListEl.innerHTML = '';
+
+            if (data.links.length === 0) {
+                inviteListEl.innerHTML = '<div style="text-align: center; color: #999; padding: 10px;">暂无邀请链接</div>';
+                return;
+            }
+
+            data.links.forEach(invite => {
+                const expireText = invite.expiresAt ? new Date(invite.expiresAt).toLocaleString() : '永不过期';
+                const usageText = invite.maxUsage ? `${invite.usageCount}/${invite.maxUsage}` : `${invite.usageCount}/无限`;
+                const fullUrl = `${window.location.origin}/?r=${invite.roomId}&i=${invite.id}`;
+
+                const linkHtml = `
+                    <div class="invite-item" data-invite-id="${invite.id}">
+                        <div class="invite-info">
+                            <div class="invite-url" title="${fullUrl}">${fullUrl}</div>
+                            <div class="invite-meta">
+                                角色: ${getRoleLabel(invite.role)} | 过期: ${expireText} | 使用: ${usageText}
+                            </div>
+                        </div>
+                        <div class="invite-actions">
+                            <button onclick="copyInviteLink('${fullUrl}')">复制</button>
+                            <button onclick="deleteInviteLink('${invite.id}')">删除</button>
+                        </div>
+                    </div>
+                `;
+
+                inviteListEl.insertAdjacentHTML('beforeend', linkHtml);
+            });
+        }
+
+        // 处理隐私配置更新
+        function handlePrivacyConfigUpdated(data) {
+            const actorName = getUserName(data.updatedBy);
+            showNotification(`${actorName} 更新了隐私配置`);
+
+            roomInfo.privacy = data.config;
+
+            // 更新隐私配置UI
+            const guestCanViewMessages = document.getElementById('guestCanViewMessages');
+            const guestCanViewUserList = document.getElementById('guestCanViewUserList');
+            const requireInviteToJoin = document.getElementById('requireInviteToJoin');
+
+            if (guestCanViewMessages) guestCanViewMessages.checked = data.config.guestCanViewMessages;
+            if (guestCanViewUserList) guestCanViewUserList.checked = data.config.guestCanViewUserList;
+            if (requireInviteToJoin) requireInviteToJoin.checked = data.config.requireInviteToJoin;
+        }
+
+        // 处理Creator转让
+        function handleCreatorTransferred(data) {
+            const oldName = getUserName(data.oldCreatorId);
+            const newName = getUserName(data.newCreatorId);
+
+            showNotification(`${oldName} 将创建者身份转让给 ${newName}`);
+
+            // 如果转让给自己，更新角色
+            if (data.newCreatorId === userId) {
+                roomInfo.yourRole = 'creator';
+                roomInfo.isCreator = true;
+                updateUIBasedOnRole();
+            }
+            // 如果自己是原Creator，更新角色
+            if (data.oldCreatorId === userId) {
+                roomInfo.yourRole = 'admin';
+                roomInfo.isCreator = false;
+                updateUIBasedOnRole();
+            }
+
+            // 刷新用户列表
+            websocket.send(JSON.stringify({ type: 'getUsers' }));
+        }
+
+        // 处理权限拒绝
+        function handlePermissionDenied(data) {
+            showNotification(`权限不足: ${data.reason}`, 'error');
+            debugLog(`权限拒绝 - 操作: ${data.action}, 原因: ${data.reason}`);
+        }
+
+        // 获取用户名称（从users Map查询）
+        function getUserName(userId) {
+            const user = users.get(userId);
+            return user ? user.name : userId.slice(-16);
+        }
+
+        // 更新UI基于角色
+        function updateUIBasedOnRole() {
+            const isPrivate = roomInfo.roomType === 'private';
+            const isCreator = roomInfo.yourRole === 'creator';
+            const isAdmin = roomInfo.yourRole === 'admin';
+            const hasManagePermission = isCreator || isAdmin;
+
+            // 显示/隐藏管理区域
+            const roomTypeSection = document.getElementById('roomTypeSection');
+            const inviteSection = document.getElementById('inviteSection');
+            const banListSection = document.getElementById('banListSection');
+            const privacySection = document.getElementById('privacySection');
+
+            if (roomTypeSection) {
+                roomTypeSection.style.display = isCreator ? 'block' : 'none';
+            }
+
+            if (inviteSection) {
+                inviteSection.style.display = (isPrivate && hasManagePermission) ? 'block' : 'none';
+            }
+
+            if (banListSection) {
+                banListSection.style.display = (isPrivate && hasManagePermission) ? 'block' : 'none';
+            }
+
+            if (privacySection) {
+                privacySection.style.display = (isPrivate && isCreator) ? 'block' : 'none';
+            }
+
+            // 更新转换按钮文本
+            const convertBtn = document.getElementById('convertRoomTypeBtn');
+            if (convertBtn) {
+                if (roomInfo.roomType === 'public') {
+                    convertBtn.textContent = '转换为私密房间';
+                    convertBtn.onclick = () => convertRoomType('private');
+                } else {
+                    convertBtn.textContent = '转换为公开房间';
+                    convertBtn.onclick = () => convertRoomType('public');
+                }
+            }
+
+            // 显示/隐藏房间设置Tab
+            const roomSettingsTab = document.querySelector('[data-tab="roomSettings"]');
+            if (roomSettingsTab) {
+                // 只有creator或admin才能看到房间设置Tab
+                if (hasManagePermission || isCreator) {
+                    roomSettingsTab.style.display = 'flex';
+                } else {
+                    roomSettingsTab.style.display = 'none';
+                    // 如果当前在房间设置Tab，切换回密钥管理
+                    const roomSettingsContent = document.getElementById('roomSettings');
+                    if (roomSettingsContent && roomSettingsContent.classList.contains('active')) {
+                        // 切换到密钥管理Tab
+                        const keyManagementTab = document.querySelector('[data-tab="keyManagement"]');
+                        const keyManagementContent = document.getElementById('keyManagement');
+                        if (keyManagementTab && keyManagementContent) {
+                            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                            keyManagementTab.classList.add('active');
+                            keyManagementContent.classList.add('active');
+                        }
+                    }
+                }
+            }
+
+            // 根据权限启用/禁用消息发送
+            const canSendMessages = roomInfo.yourRole !== 'guest';
+            if (publicKey && websocket && websocket.readyState === WebSocket.OPEN) {
+                messageInputEl.disabled = !canSendMessages;
+                sendButtonEl.disabled = !canSendMessages;
+
+                if (!canSendMessages) {
+                    messageInputEl.placeholder = '访客无法发送消息';
+                } else {
+                    messageInputEl.placeholder = '输入消息...';
+                }
+            }
+        }
+
+        // ========================
+        // 群管理功能 - 操作函数
+        // ========================
+
+        // 转换房间类型
+        function convertRoomType(targetType) {
+            if (!confirm(`确定要将房间转换为${getRoomTypeLabel(targetType)}吗？`)) return;
+
+            websocket.send(JSON.stringify({
+                type: 'convertRoomType',
+                targetType: targetType
+            }));
+        }
+
+        // 踢出用户
+        function kickUser(targetUserId) {
+            const targetUser = users.get(targetUserId);
+            if (!targetUser) return;
+
+            const reason = prompt(`确定要踢出用户 ${targetUser.name} 吗？请输入原因（可选）：`);
+            if (reason === null) return; // 用户取消
+
+            websocket.send(JSON.stringify({
+                type: 'kickUser',
+                targetUserId: targetUserId,
+                reason: reason || undefined
+            }));
+        }
+
+        // 封禁用户
+        function banUser(targetUserId, banType) {
+            const targetUser = users.get(targetUserId);
+            if (!targetUser) return;
+
+            const typeText = banType === 'ip' ? 'IP地址' : '密钥指纹';
+            const reason = prompt(`确定要封禁用户 ${targetUser.name} 的${typeText}吗？请输入原因（可选）：`);
+            if (reason === null) return; // 用户取消
+
+            websocket.send(JSON.stringify({
+                type: 'banUser',
+                targetUserId: targetUserId,
+                banType: banType,
+                reason: reason || undefined
+            }));
+        }
+
+        // 解除封禁
+        function unbanUser(banType, value) {
+            if (!confirm(`确定要解除此封禁吗？`)) return;
+
+            websocket.send(JSON.stringify({
+                type: 'unban',
+                banType: banType,
+                value: value
+            }));
+
+            // 刷新封禁列表
+            setTimeout(() => getBanList(), 500);
+        }
+
+        // 修改用户角色
+        function changeUserRole(targetUserId, newRole) {
+            const targetUser = users.get(targetUserId);
+            if (!targetUser) return;
+
+            if (!confirm(`确定要将 ${targetUser.name} 的角色变更为 ${getRoleLabel(newRole)} 吗？`)) return;
+
+            websocket.send(JSON.stringify({
+                type: 'changeRole',
+                targetUserId: targetUserId,
+                newRole: newRole
+            }));
+        }
+
+        // 生成邀请链接
+        function generateInviteLink() {
+            const role = document.getElementById('inviteRole')?.value || 'user';
+            const expiresHours = document.getElementById('inviteExpires')?.value;
+            const maxUsage = document.getElementById('inviteMaxUsage')?.value;
+
+            const message = {
+                type: 'generateInvite',
+                role: role
+            };
+
+            if (expiresHours && parseInt(expiresHours) > 0) {
+                message.expiresIn = parseInt(expiresHours) * 3600000; // 转换为毫秒
+            }
+
+            if (maxUsage && parseInt(maxUsage) > 0) {
+                message.maxUsage = parseInt(maxUsage);
+            }
+
+            websocket.send(JSON.stringify(message));
+        }
+
+        // 删除邀请链接
+        function deleteInviteLink(inviteId) {
+            if (!confirm('确定要删除此邀请链接吗？')) return;
+
+            websocket.send(JSON.stringify({
+                type: 'deleteInviteLink',
+                inviteId: inviteId
+            }));
+
+            // 删除UI元素
+            const inviteItem = document.querySelector(`[data-invite-id="${inviteId}"]`);
+            if (inviteItem) {
+                inviteItem.remove();
+            }
+        }
+
+        // 获取封禁列表
+        function getBanList() {
+            websocket.send(JSON.stringify({
+                type: 'getBanList'
+            }));
+        }
+
+        // 获取邀请链接列表
+        function getInviteLinks() {
+            websocket.send(JSON.stringify({
+                type: 'getInviteLinks'
+            }));
+        }
+
+        // 更新隐私配置
+        function updatePrivacyConfig() {
+            const guestCanViewMessages = document.getElementById('guestCanViewMessages')?.checked || false;
+            const guestCanViewUserList = document.getElementById('guestCanViewUserList')?.checked || false;
+            const requireInviteToJoin = document.getElementById('requireInviteToJoin')?.checked || false;
+
+            websocket.send(JSON.stringify({
+                type: 'updatePrivacyConfig',
+                config: {
+                    guestCanViewMessages: guestCanViewMessages,
+                    guestCanViewUserList: guestCanViewUserList,
+                    requireInviteToJoin: requireInviteToJoin
+                }
+            }));
+        }
+
+        // 转让Creator身份
+        function transferCreator(targetUserId) {
+            const targetUser = users.get(targetUserId);
+            if (!targetUser) return;
+
+            if (!confirm(`确定要将创建者身份转让给 ${targetUser.name} 吗？此操作不可撤销！`)) return;
+
+            websocket.send(JSON.stringify({
+                type: 'transferCreator',
+                targetUserId: targetUserId
+            }));
+        }
+
+        // 复制邀请链接
+        function copyInviteLink(url) {
+            navigator.clipboard.writeText(url)
+                .then(() => showNotification('邀请链接已复制'))
+                .catch(err => {
+                    // fallback
+                    const textArea = document.createElement('textarea');
+                    textArea.value = url;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showNotification('邀请链接已复制');
+                });
+        }
+
         // 更新用户列表
         function updateUserList(userList) {
             userListEl.innerHTML = '';
             users.clear();
-            
+
             debugLog(`更新用户列表，共 ${userList.length} 个用户`);
-            
+
             userList.forEach(user => {
                 users.set(user.id, user);
 
@@ -1121,28 +2091,108 @@
 
                 const idDisplay = user.id.slice(-16);
 
+                // 用户信息容器
+                const userInfoEl = document.createElement('div');
+                userInfoEl.className = 'user-info-container';
+
                 // 使用DOM API创建元素而不是innerHTML
                 const nameEl = document.createElement('div');
                 nameEl.className = 'user-name';
                 nameEl.textContent = user.name + (user.id === userId ? ' (你)' : '');
 
+                // 添加角色徽章
+                if (user.role) {
+                    const roleEl = document.createElement('span');
+                    roleEl.className = `role-badge role-${user.role}`;
+                    roleEl.textContent = getRoleLabel(user.role);
+                    nameEl.appendChild(roleEl);
+                }
+
                 const idEl = document.createElement('div');
                 idEl.className = 'user-id';
                 idEl.textContent = idDisplay;
 
-                userEl.appendChild(nameEl);
-                userEl.appendChild(idEl);
+                userInfoEl.appendChild(nameEl);
+                userInfoEl.appendChild(idEl);
 
                 if (user.email) {
                     const emailEl = document.createElement('div');
                     emailEl.className = 'user-email';
                     emailEl.textContent = user.email;
-                    userEl.appendChild(emailEl);
+                    userInfoEl.appendChild(emailEl);
+                }
+
+                userEl.appendChild(userInfoEl);
+
+                // 添加操作按钮（如果有权限且不是自己）
+                if (user.id !== userId && roomInfo.roomType === 'private') {
+                    const actionsEl = document.createElement('div');
+                    actionsEl.className = 'user-actions';
+
+                    // 踢出按钮
+                    if (hasPermission('kick') && user.role !== 'creator') {
+                        const kickBtn = document.createElement('button');
+                        kickBtn.className = 'action-btn kick-btn';
+                        kickBtn.textContent = '踢出';
+                        kickBtn.onclick = () => kickUser(user.id);
+                        actionsEl.appendChild(kickBtn);
+                    }
+
+                    // 封禁按钮
+                    if (hasPermission('ban') && user.role !== 'creator') {
+                        const banBtn = document.createElement('button');
+                        banBtn.className = 'action-btn ban-btn';
+                        banBtn.textContent = '封禁';
+                        banBtn.onclick = () => {
+                            const banType = confirm('封禁密钥指纹？\n点击"确定"封禁密钥指纹，点击"取消"封禁IP') ? 'keyFingerprint' : 'ip';
+                            banUser(user.id, banType);
+                        };
+                        actionsEl.appendChild(banBtn);
+                    }
+
+                    // 角色切换下拉菜单
+                    if (hasPermission('changeRole') && user.role !== 'creator') {
+                        const roleSelect = document.createElement('select');
+                        roleSelect.className = 'role-select';
+                        roleSelect.value = user.role;
+
+                        const roles = ['admin', 'user', 'guest'];
+                        roles.forEach(role => {
+                            const option = document.createElement('option');
+                            option.value = role;
+                            option.textContent = getRoleLabel(role);
+                            if (role === user.role) {
+                                option.selected = true;
+                            }
+                            roleSelect.appendChild(option);
+                        });
+
+                        roleSelect.onchange = () => {
+                            if (roleSelect.value !== user.role) {
+                                changeUserRole(user.id, roleSelect.value);
+                            }
+                        };
+
+                        actionsEl.appendChild(roleSelect);
+                    }
+
+                    // 转让Creator按钮（仅Creator可见）
+                    if (roomInfo.yourRole === 'creator' && user.role !== 'creator') {
+                        const transferBtn = document.createElement('button');
+                        transferBtn.className = 'action-btn transfer-btn';
+                        transferBtn.textContent = '转让';
+                        transferBtn.onclick = () => transferCreator(user.id);
+                        actionsEl.appendChild(transferBtn);
+                    }
+
+                    if (actionsEl.children.length > 0) {
+                        userEl.appendChild(actionsEl);
+                    }
                 }
 
                 userListEl.appendChild(userEl);
             });
-            
+
             if (userList.length === 0) {
                 userListEl.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无用户</div>';
             }
@@ -1152,14 +2202,20 @@
         async function sendMessage() {
             const messageText = messageInputEl.value.trim();
             if (!messageText) return;
-            
+
             if (!publicKey) {
                 showNotification('请先导入或生成公钥', 'warning');
                 return;
             }
-            
+
             if (!websocket || websocket.readyState !== WebSocket.OPEN) {
                 showNotification('WebSocket未连接', 'error');
+                return;
+            }
+
+            // 检查是否有发送消息权限
+            if (roomInfo.yourRole === 'guest') {
+                showNotification('访客无法发送消息', 'warning');
                 return;
             }
             
@@ -1231,6 +2287,26 @@
         // 初始化
         // ========================
         
+        // Tab切换处理
+        function setupTabSwitching() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetTab = btn.getAttribute('data-tab');
+
+                    // 移除所有active类
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+
+                    // 添加active类到当前tab
+                    btn.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                });
+            });
+        }
+
         // 面板切换处理
         function setupSidebarToggle() {
             const roomName = document.getElementById('roomName');
@@ -1246,7 +2322,7 @@
                     slideToggle.classList.add('expanded');
                 }
             }
-            
+
             // 收起侧边栏
             function collapseSidebar() {
                 if (isMobile) return;
@@ -1256,13 +2332,13 @@
                     slideToggle.classList.remove('expanded');
                 }
             }
-            
+
             // 点击标题展开侧边栏
             roomName.addEventListener('click', expandSidebar);
-            
+
             // 点击遮罩层收起侧边栏
             overlay.addEventListener('click', collapseSidebar);
-            
+
             // 响应窗口大小变化
             window.addEventListener('resize', () => {
                 if (isMobile) {
@@ -1275,25 +2351,35 @@
 		// 初始化应用
         document.addEventListener('DOMContentLoaded', async function() {
             debugLog('应用初始化...');
-            
+
+            // 设置Tab切换
+            setupTabSwitching();
 
             // 设置侧边栏切换
             setupSidebarToggle();
-            
-            // 尝试从URL参数获取房间ID
-            const roomIdFromURL = getRoomIdFromURL();
-            
-            if (roomIdFromURL) {
+
+            // 尝试从URL参数获取房间ID和邀请码
+            const urlParams = getUrlParams();
+
+            if (urlParams.roomId) {
                 // 使用URL中提供的房间ID
-                roomId = roomIdFromURL;
+                roomId = urlParams.roomId;
                 debugLog(`从URL参数获取房间ID: ${roomId}`);
-                showNotification(`正在加入房间: ${roomId.slice(0, 8)}...`, 'warning');
+
+                // 检查是否有邀请码
+                if (urlParams.inviteId) {
+                    inviteId = urlParams.inviteId;
+                    debugLog(`检测到邀请码: ${inviteId}`);
+                    showNotification(`正在使用邀请链接加入房间: ${roomId.slice(0, 8)}...`, 'warning');
+                } else {
+                    showNotification(`正在加入房间: ${roomId.slice(0, 8)}...`, 'warning');
+                }
             } else {
                 // 创建新房间
                 try {
                     roomId = await fetchRoomId();
                     debugLog(`创建新房间: ${roomId}`);
-                    
+
                     // 更新URL以包含新房间ID
                     updateURLWithRoomId(roomId);
                     showNotification(`已创建聊天室: ${roomId.slice(0, 8)}...`);

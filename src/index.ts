@@ -23,7 +23,7 @@ export default {
         // 创建房间 API
         if (url.pathname === '/api/room' && request.method === 'POST') {
             try {
-                // 生成64字符的随机房间ID
+                // 生成10字符的短房间ID
                 const roomId = generateRoomId();
                 
                 return new Response(roomId, {
@@ -82,12 +82,28 @@ export default {
     }
 };
 
-// 生成64字符的随机房间ID
+// 生成10字符的短房间ID（base62编码）
 function generateRoomId(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const length = 10;
     let result = '';
-    for (let i = 0; i < 64; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    const randomBytes = new Uint8Array(length);
+    crypto.getRandomValues(randomBytes);
+    for (let i = 0; i < length; i++) {
+        result += chars[randomBytes[i] % chars.length];
+    }
+    return result;
+}
+
+// 生成8字符的邀请码（base62编码）
+export function generateInviteCode(): string {
+    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const length = 8;
+    let result = '';
+    const randomBytes = new Uint8Array(length);
+    crypto.getRandomValues(randomBytes);
+    for (let i = 0; i < length; i++) {
+        result += chars[randomBytes[i] % chars.length];
     }
     return result;
 }
