@@ -43,15 +43,36 @@ export default {
             }
         }
 
-        // WebSocket 连接处理
-        const match = url.pathname.match(/^\/api\/room\/([a-zA-Z0-9]{64})\/websocket$/);
+        // WebSocket 连接处理（支持Unicode房间ID）
+        const match = url.pathname.match(/^\/api\/room\/([^/]+)\/websocket$/);
         if (match && request.headers.get('Upgrade') === 'websocket') {
-            const roomId = match[1];
+            // 解码URL中的房间ID（支持Unicode字符）
+            let roomId: string;
+            try {
+                roomId = decodeURIComponent(match[1]);
+            } catch (error) {
+                return new Response('Invalid room ID encoding', {
+                    status: 400,
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                    }
+                });
+            }
+
+            // 验证房间ID
+            if (!roomId || roomId.length === 0 || roomId.length > 256) {
+                return new Response('Invalid room ID: must be between 1 and 256 characters', {
+                    status: 400,
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                    }
+                });
+            }
 
             // 获取或创建 Durable Object 实例
             const durableObjectId = env.CHAT_ROOMS.idFromName(roomId);
             const durableObject = env.CHAT_ROOMS.get(durableObjectId);
-            
+
             // 转发 WebSocket 请求到 Durable Object
             return durableObject.fetch(request);
         }

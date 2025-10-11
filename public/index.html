@@ -588,7 +588,9 @@
         function getWebSocketUrl() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const host = window.location.host;
-            return `${protocol}//${host}/api/room/${roomId}/websocket`;
+            // 对房间ID进行URL编码以支持Unicode字符
+            const encodedRoomId = encodeURIComponent(roomId);
+            return `${protocol}//${host}/api/room/${encodedRoomId}/websocket`;
         }
 
         async function connectWebSocket() {
