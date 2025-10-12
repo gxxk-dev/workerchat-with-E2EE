@@ -753,12 +753,28 @@ export class ChatRoom {
         this.broadcast(broadcastMessage);
     }
 
-    private handleDisconnect(webSocket: WebSocket): void {
+    private async handleDisconnect(webSocket: WebSocket): Promise<void> {
         this.sessions.delete(webSocket);
         this.users.delete(webSocket);
 
         // 向其他用户广播用户列表更新
         this.broadcastUserList();
+
+        // 当房间内没有用户时,清空所有持久化数据
+        if (this.users.size === 0) {
+            await this.clearAllData();
+        }
+    }
+
+    private async clearAllData(): Promise<void> {
+        // 清空内存数据
+        this.roomConfig = null;
+        this.invites.clear();
+        this.banList = [];
+        this.origin = '';
+
+        // 清空持久化存储
+        await this.state.storage.deleteAll();
     }
 
     private broadcast(message: any): void {
