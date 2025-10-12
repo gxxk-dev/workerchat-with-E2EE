@@ -166,7 +166,11 @@ export class ChatRoom {
             if (isFirstUser && !this.roomConfig) {
                 this.roomConfig = {
                     type: RoomType.PUBLIC,
-                    creatorId: userProfile.id
+                    creatorId: userProfile.id,
+                    enableMessageCount: true,  // 默认启用消息计数
+                    messageCountVisibleToUser: false,
+                    messageCountVisibleToGuest: false,
+                    messageCount: 0
                 };
                 await this.saveRoomConfig();
             }
