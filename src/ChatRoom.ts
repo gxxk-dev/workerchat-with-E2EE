@@ -23,6 +23,7 @@ export class ChatRoom {
     private invites: Map<string, InviteLink> = new Map();
     private banList: BanRecord[] = [];
     private origin: string = ''; // 保存请求的origin
+    private userRoles: Map<string, UserRole> = new Map(); // 持久化用户角色映射
 
     constructor(state: DurableObjectState) {
         this.state = state;
@@ -34,6 +35,7 @@ export class ChatRoom {
         await this.loadRoomConfig();
         await this.loadInvites();
         await this.loadBanList();
+        await this.loadUserRoles();
     }
 
     async fetch(request: Request): Promise<Response> {
@@ -202,6 +204,10 @@ export class ChatRoom {
 
             this.users.set(webSocket, userInfo);
 
+            // 保存用户角色到持久化存储
+            this.userRoles.set(userInfo.id, assignedRole);
+            await this.saveUserRoles();
+
             // 发送注册成功响应
             const registeredResponse: RegisteredMessage = {
                 type: 'registered',
@@ -253,13 +259,21 @@ export class ChatRoom {
         inviteId: string | undefined,
         userFingerprint: string
     ): Promise<UserRole> {
+        // 优先检查是否有已保存的角色(用户重新连接时)
+        const savedRole = this.userRoles.get(userFingerprint);
+        if (savedRole) {
+            return savedRole;
+        }
+
+        // 第一个用户成为 Creator
         if (isFirstUser) return UserRole.CREATOR;
 
+        // Public 房间默认为 USER
         if (roomConfig.type === RoomType.PUBLIC) {
             return UserRole.USER;
         }
 
-        // Private 房间
+        // Private 房间 - 检查邀请链接
         if (inviteId) {
             const invite = await this.validateInvite(inviteId);
             if (invite) {
@@ -268,10 +282,12 @@ export class ChatRoom {
             }
         }
 
+        // Private 房间 - 检查是否需要邀请
         if (roomConfig.privacy?.requireInviteToJoin) {
             throw new Error('需要有效的邀请链接才能加入此房间');
         }
 
+        // 默认为 GUEST
         return UserRole.GUEST;
     }
 
@@ -430,6 +446,12 @@ export class ChatRoom {
                     u.role = UserRole.USER;
                 }
             }
+
+            // 保存用户角色到持久化存储
+            for (const [ws, u] of this.users) {
+                this.userRoles.set(u.id, u.role);
+            }
+            await this.saveUserRoles();
         }
 
         await this.saveRoomConfig();
@@ -554,6 +576,10 @@ export class ChatRoom {
 
         const oldRole = target.role;
         target.role = message.newRole;
+
+        // 保存用户角色到持久化存储
+        this.userRoles.set(target.id, message.newRole);
+        await this.saveUserRoles();
 
         // 广播通知
         const notification: RoleChangedMessage = {
@@ -710,6 +736,11 @@ export class ChatRoom {
         target.role = UserRole.CREATOR;
         this.roomConfig.creatorId = target.id;
 
+        // 保存用户角色到持久化存储
+        this.userRoles.set(actor.id, UserRole.ADMIN);
+        this.userRoles.set(target.id, UserRole.CREATOR);
+        await this.saveUserRoles();
+
         await this.saveRoomConfig();
 
         // 广播通知
@@ -854,6 +885,7 @@ export class ChatRoom {
         this.roomConfig = null;
         this.invites.clear();
         this.banList = [];
+        this.userRoles.clear();
         this.origin = '';
 
         // 清空持久化存储
@@ -993,6 +1025,18 @@ export class ChatRoom {
 
     private async saveBanList(): Promise<void> {
         await this.state.storage.put('banList', { records: this.banList });
+    }
+
+    private async loadUserRoles(): Promise<void> {
+        const rolesData = await this.state.storage.get<Record<string, UserRole>>('userRoles');
+        if (rolesData) {
+            this.userRoles = new Map(Object.entries(rolesData));
+        }
+    }
+
+    private async saveUserRoles(): Promise<void> {
+        const rolesObj = Object.fromEntries(this.userRoles);
+        await this.state.storage.put('userRoles', rolesObj);
     }
 
     // ========== 工具方法 ==========

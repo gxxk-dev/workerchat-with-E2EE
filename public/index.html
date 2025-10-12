@@ -521,6 +521,28 @@
         }
 
         /* ========================
+         * 自定义滚动条样式 (仅桌面端)
+         * ======================== */
+        @media (min-width: 769px) {
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: rgba(128, 128, 128, 0.5);
+                border-radius: 3px;
+            }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: rgba(128, 128, 128, 0.7);
+            }
+        }
+
+        /* ========================
          * 群管理功能样式
          * ======================== */
 
@@ -1056,9 +1078,11 @@
         // ========================
         let privateKey = '';
         let publicKey = '';
-        let userId = '';
+        let userId = ''; // 服务器返回的用户ID,用于消息识别
+        let userFingerprint = ''; // 本地密钥指纹(long key ID),用于显示
         let userName = '';
         let userEmail = '';
+        let hasInitializedKeyId = false; // 标志:确保密钥指纹只加载一次
         let websocket = null;
         let roomId = '';
         let inviteId = ''; // 邀请码
@@ -1310,10 +1334,19 @@
             switch (data.type) {
                 case 'registered':
                 case 'authenticated':
+                    // 始终使用服务器返回的ID作为userId(用于消息识别)
                     userId = data.profile.id;
+                    // 始终更新用户名和邮箱（可能在服务器端被更新）
                     userName = data.profile.name;
                     userEmail = data.profile.email;
-                    keyIdEl.textContent = userId;
+
+                    // 显示密钥指纹(如果已初始化)或服务器ID
+                    if (userFingerprint) {
+                        keyIdEl.textContent = userFingerprint;
+                    } else {
+                        keyIdEl.textContent = userId;
+                    }
+
                     if (data.assignedRole) {
                         roomInfo.yourRole = data.assignedRole;
                         showNotification(`身份验证成功，角色: ${getRoleLabel(data.assignedRole)}`);
@@ -1395,24 +1428,43 @@
         // ========================
         // 密钥管理函数
         // ========================
-        
+
+        // 获取Long Key ID(使用完整指纹)
+        function getLongKeyId(pubKey) {
+            return pubKey.getFingerprint();
+        }
+
+        // 初始化密钥指纹(只执行一次)
+        function initializeMyKeyId(pubKey) {
+            if (hasInitializedKeyId) {
+                debugLog('密钥指纹已初始化,跳过重复加载');
+                return false;
+            }
+
+            userFingerprint = getLongKeyId(pubKey);
+            userName = pubKey.users[0]?.userID?.name || '匿名';
+            userEmail = pubKey.users[0]?.userID?.email || '';
+            keyIdEl.textContent = userFingerprint;
+            hasInitializedKeyId = true;
+
+            debugLog(`密钥指纹已初始化(Long Key ID): ${userFingerprint}`);
+            return true;
+        }
+
         // 加载本地密钥
         async function loadLocalKeys() {
             try {
                 privateKey = localStorage.getItem('pgpPrivateKey') || '';
                 publicKey = localStorage.getItem('pgpPublicKey') || '';
-                
+
                 if (publicKey) {
                     debugLog('正在解析本地公钥...');
                     const pubKey = await openpgp.readKey({ armoredKey: publicKey });
-                    const userID = pubKey.users[0].userID;
-                    
-                    userId = pubKey.getKeyID().toHex();
-                    userName = userID?.name || '匿名';
-                    userEmail = userID?.email || '';
-                    
-                    keyIdEl.textContent = userId;
-                    debugLog('本地密钥加载成功');
+
+                    // 使用统一函数初始化密钥ID
+                    if (initializeMyKeyId(pubKey)) {
+                        debugLog('本地密钥加载成功');
+                    }
                 }
             } catch (error) {
                 debugLog('公钥解析失败: ' + error.message);
@@ -1443,19 +1495,15 @@
                             if (pubKey.isPrivate()) {
                                 throw new Error('这不是一个有效的公钥');
                             }
-                            
+
                             publicKey = text;
                             localStorage.setItem('pgpPublicKey', publicKey);
-                            
-                            const userID = pubKey.users[0].userID;
-                            userId = pubKey.getKeyID().toHex();
-                            userName = userID?.name || '匿名';
-                            userEmail = userID?.email || '';
-                            
-                            keyIdEl.textContent = userId;
+
+                            // 使用统一函数初始化密钥指纹
+                            initializeMyKeyId(pubKey);
                             showNotification('公钥导入成功');
-                            debugLog('公钥导入成功，用户ID: ' + userId);
-                            
+                            debugLog('公钥导入成功,密钥指纹: ' + userFingerprint);
+
                             // 重新注册
                             if (websocket && websocket.readyState === WebSocket.OPEN) {
                                 registerUser();
@@ -1470,18 +1518,15 @@
                             privateKey = text;
                             localStorage.setItem('pgpPrivateKey', privateKey);
                             
-                            // 如果还没有公钥，从私钥中提取
+                            // 如果还没有公钥,从私钥中提取
                             if (!publicKey) {
-                                publicKey = privKey.toPublic().armor();
+                                const pubKeyFromPriv = privKey.toPublic();
+                                publicKey = pubKeyFromPriv.armor();
                                 localStorage.setItem('pgpPublicKey', publicKey);
-                                
-                                const userID = privKey.users[0].userID;
-                                userId = privKey.getKeyID().toHex();
-                                userName = userID?.name || '匿名';
-                                userEmail = userID?.email || '';
-                                
-                                keyIdEl.textContent = userId;
-                                
+
+                                // 使用统一函数初始化密钥ID
+                                initializeMyKeyId(pubKeyFromPriv);
+
                                 // 重新注册
                                 if (websocket && websocket.readyState === WebSocket.OPEN) {
                                     registerUser();
@@ -1551,24 +1596,19 @@
                 localStorage.setItem('pgpPrivateKey', privateKey);
                 localStorage.setItem('pgpPublicKey', publicKey);
                 debugLog('密钥已保存到本地存储');
-                
-                // 提取用户信息
+
+                // 提取用户信息并使用统一函数初始化密钥指纹
                 const pubKeyObj = await openpgp.readKey({ armoredKey: publicKey });
-                const userID = pubKeyObj.users[0].userID;
-                userId = pubKeyObj.getKeyID().toHex();
-                userName = userID?.name || '匿名用户';
-                userEmail = userID?.email || '';
-                
-                keyIdEl.textContent = userId;
-                debugLog('密钥生成成功，用户ID: ' + userId);
-                
-                showNotification('新密钥已生成');
-                
-                // 重新注册
-                if (websocket && websocket.readyState === WebSocket.OPEN) {
-                    registerUser();
-                }
-                
+                initializeMyKeyId(pubKeyObj);
+                debugLog('密钥生成成功,密钥指纹: ' + userFingerprint);
+
+                showNotification('新密钥已生成,即将刷新页面...');
+
+                // 延迟1秒后刷新页面,让用户看到成功提示
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+
             } catch (error) {
                 debugLog('生成密钥失败: ' + error.message);
                 showNotification('生成密钥失败: ' + error.message, 'error');
@@ -1780,10 +1820,10 @@
         // 获取角色显示标签
         function getRoleLabel(role) {
             const labels = {
-                'creator': '⭐ Creator',
-                'admin': '🛡️ Admin',
-                'user': '👤 User',
-                'guest': '👁️ Guest'
+                'creator': 'Creator',
+                'admin': 'Admin',
+                'user': 'User',
+                'guest': 'Guest'
             };
             return labels[role] || role;
         }
