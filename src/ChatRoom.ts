@@ -170,8 +170,8 @@ export class ChatRoom {
                     type: RoomType.PUBLIC,
                     creatorId: userProfile.id,
                     enableMessageCount: true,  // 默认启用消息计数
-                    messageCountVisibleToUser: false,
-                    messageCountVisibleToGuest: false,
+                    messageCountVisibleToUser: true,
+                    messageCountVisibleToGuest: true,
                     messageCount: 0
                 };
                 await this.saveRoomConfig();
