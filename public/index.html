@@ -532,23 +532,23 @@
         }
 
         .role-creator {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: rgba(102, 126, 234, 0.3);
+            color: #a5b4fc;
         }
 
         .role-admin {
-            background: #e74c3c;
-            color: white;
+            background: rgba(231, 76, 60, 0.3);
+            color: #fca5a5;
         }
 
         .role-user {
-            background: #3498db;
-            color: white;
+            background: rgba(52, 152, 219, 0.3);
+            color: #93c5fd;
         }
 
         .role-guest {
-            background: #95a5a6;
-            color: white;
+            background: rgba(149, 165, 166, 0.3);
+            color: #d1d5db;
         }
 
         /* 用户信息容器 */
@@ -2191,8 +2191,8 @@
                 nameEl.className = 'user-name';
                 nameEl.textContent = user.name + (user.id === userId ? ' (你)' : '');
 
-                // 添加角色徽章
-                if (user.role) {
+                // 添加角色徽章 - 仅在Private房间下显示
+                if (user.role && roomInfo.roomType === 'private') {
                     const roleEl = document.createElement('span');
                     roleEl.className = `role-badge role-${user.role}`;
                     roleEl.textContent = getRoleLabel(user.role);
