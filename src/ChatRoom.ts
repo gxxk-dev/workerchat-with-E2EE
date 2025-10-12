@@ -9,6 +9,7 @@ import {
     UserKickedMessage, UserBannedMessage, RoleChangedMessage,
     InviteLinkGeneratedMessage, BanListMessage, InviteLinksMessage,
     PrivacyConfigUpdatedMessage, CreatorTransferredMessage, PermissionDeniedMessage,
+    UpdateMessageCountConfigMessage, MessageCountConfigUpdatedMessage,
     ROLE_PERMISSIONS
 } from "./models";
 import { readKey } from "openpgp";
@@ -94,7 +95,7 @@ export class ChatRoom {
                 this.handleGetUsers(webSocket);
                 break;
             case 'message':
-                this.handleChatMessage(webSocket, message);
+                await this.handleChatMessage(webSocket, message);
                 break;
             case 'convertRoomType':
                 await this.handleConvertRoomType(webSocket, message);
@@ -128,6 +129,9 @@ export class ChatRoom {
                 break;
             case 'transferCreator':
                 await this.handleTransferCreator(webSocket, message);
+                break;
+            case 'updateMessageCountConfig':
+                await this.handleUpdateMessageCountConfig(webSocket, message);
                 break;
             default:
                 this.sendError(webSocket, `Unknown message type: ${message.type}`);
@@ -215,6 +219,12 @@ export class ChatRoom {
                 yourRole: assignedRole,
                 privacy: this.roomConfig!.privacy
             };
+
+            // 根据权限添加消息计数
+            if (this.canViewMessageCount(userInfo)) {
+                roomInfo.messageCount = this.roomConfig!.messageCount || 0;
+            }
+
             webSocket.send(JSON.stringify(roomInfo));
 
             // 向所有用户广播用户列表更新
@@ -347,6 +357,29 @@ export class ChatRoom {
         if (newRole === UserRole.CREATOR) return false;
 
         return this.hasPermission(actor, Permission.CHANGE_ROLES);
+    }
+
+    private canViewMessageCount(user: UserInfo): boolean {
+        if (!this.roomConfig || !this.roomConfig.enableMessageCount) {
+            return false;
+        }
+
+        // Creator 和 Admin 总是可见
+        if (user.role === UserRole.CREATOR || user.role === UserRole.ADMIN) {
+            return true;
+        }
+
+        // User 根据配置可见
+        if (user.role === UserRole.USER) {
+            return this.roomConfig.messageCountVisibleToUser ?? false;
+        }
+
+        // Guest 根据配置可见
+        if (user.role === UserRole.GUEST) {
+            return this.roomConfig.messageCountVisibleToGuest ?? false;
+        }
+
+        return false;
     }
 
     // ========== 管理操作处理 ==========
@@ -680,6 +713,39 @@ export class ChatRoom {
         this.broadcastUserList();
     }
 
+    private async handleUpdateMessageCountConfig(webSocket: WebSocket, message: UpdateMessageCountConfigMessage): Promise<void> {
+        const actor = this.users.get(webSocket);
+        if (!actor) return;
+
+        if (!this.hasPermission(actor, Permission.UPDATE_MESSAGE_COUNT_CONFIG)) {
+            this.sendPermissionDenied(webSocket, 'updateMessageCountConfig', '只有创建者可以修改消息计数配置');
+            return;
+        }
+
+        if (!this.roomConfig) return;
+
+        this.roomConfig.enableMessageCount = message.enableMessageCount;
+        this.roomConfig.messageCountVisibleToUser = message.messageCountVisibleToUser;
+        this.roomConfig.messageCountVisibleToGuest = message.messageCountVisibleToGuest;
+
+        // 如果启用消息计数，初始化计数器
+        if (message.enableMessageCount && this.roomConfig.messageCount === undefined) {
+            this.roomConfig.messageCount = 0;
+        }
+
+        await this.saveRoomConfig();
+
+        // 广播通知
+        const notification: MessageCountConfigUpdatedMessage = {
+            type: 'messageCountConfigUpdated',
+            enableMessageCount: message.enableMessageCount,
+            messageCountVisibleToUser: message.messageCountVisibleToUser,
+            messageCountVisibleToGuest: message.messageCountVisibleToGuest,
+            updatedBy: actor.id
+        };
+        this.broadcast(notification);
+    }
+
     // ========== 消息和用户列表处理 ==========
 
     private handleGetUsers(webSocket: WebSocket): void {
@@ -719,7 +785,7 @@ export class ChatRoom {
         webSocket.send(JSON.stringify(response));
     }
 
-    private handleChatMessage(webSocket: WebSocket, message: ChatMessage): void {
+    private async handleChatMessage(webSocket: WebSocket, message: ChatMessage): Promise<void> {
         const sender = this.users.get(webSocket);
         if (!sender) {
             this.sendError(webSocket, 'User not registered');
@@ -751,6 +817,12 @@ export class ChatRoom {
         };
 
         this.broadcast(broadcastMessage);
+
+        // 递增消息计数（如果启用）
+        if (this.roomConfig && this.roomConfig.enableMessageCount) {
+            this.roomConfig.messageCount = (this.roomConfig.messageCount || 0) + 1;
+            await this.saveRoomConfig();
+        }
     }
 
     private async handleDisconnect(webSocket: WebSocket): Promise<void> {
@@ -814,6 +886,12 @@ export class ChatRoom {
                 yourRole: user.role,
                 privacy: this.roomConfig.privacy
             };
+
+            // 根据权限添加消息计数
+            if (this.canViewMessageCount(user)) {
+                roomInfo.messageCount = this.roomConfig.messageCount || 0;
+            }
+
             ws.send(JSON.stringify(roomInfo));
         }
     }

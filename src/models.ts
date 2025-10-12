@@ -26,6 +26,7 @@ export enum Permission {
     VIEW_BAN_LIST = 'view_ban_list',
     CONVERT_ROOM_TYPE = 'convert_room_type',         // 只有 Creator
     UPDATE_PRIVACY_CONFIG = 'update_privacy_config',  // 只有 Creator
+    UPDATE_MESSAGE_COUNT_CONFIG = 'update_message_count_config',  // 只有 Creator
     TRANSFER_CREATOR = 'transfer_creator'             // 只有 Creator（可选）
 }
 
@@ -42,6 +43,10 @@ export interface RoomConfig {
     type: RoomType;
     creatorId: string;  // 创建者的密钥指纹
     privacy?: PrivacyConfig;  // 仅 Private 房间使用
+    enableMessageCount?: boolean;  // 是否启用消息计数
+    messageCount?: number;  // 当前消息总数
+    messageCountVisibleToUser?: boolean;  // User 是否可见消息计数
+    messageCountVisibleToGuest?: boolean;  // Guest 是否可见消息计数
 }
 
 // 隐私配置
@@ -147,6 +152,14 @@ export interface UpdatePrivacyConfigMessage {
     config: PrivacyConfig;
 }
 
+// 更新消息计数配置（仅 Creator）
+export interface UpdateMessageCountConfigMessage {
+    type: 'updateMessageCountConfig';
+    enableMessageCount: boolean;
+    messageCountVisibleToUser: boolean;
+    messageCountVisibleToGuest: boolean;
+}
+
 // 获取封禁列表
 export interface GetBanListMessage {
     type: 'getBanList';
@@ -191,6 +204,7 @@ export interface RoomInfoMessage {
     isCreator: boolean;    // 当前用户是否为创建者
     yourRole: UserRole;    // 你的角色
     privacy?: PrivacyConfig; // 隐私配置（仅 Private 房间）
+    messageCount?: number; // 当前消息总数（根据权限返回）
 }
 
 // 房间类型已转换
@@ -264,6 +278,15 @@ export interface PrivacyConfigUpdatedMessage {
     updatedBy: string;
 }
 
+// 消息计数配置已更新
+export interface MessageCountConfigUpdatedMessage {
+    type: 'messageCountConfigUpdated';
+    enableMessageCount: boolean;
+    messageCountVisibleToUser: boolean;
+    messageCountVisibleToGuest: boolean;
+    updatedBy: string;
+}
+
 // Creator 已转让
 export interface CreatorTransferredMessage {
     type: 'creatorTransferred';
@@ -318,6 +341,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
         Permission.VIEW_BAN_LIST,
         Permission.CONVERT_ROOM_TYPE,        // 独有
         Permission.UPDATE_PRIVACY_CONFIG,    // 独有
+        Permission.UPDATE_MESSAGE_COUNT_CONFIG,  // 独有
         Permission.TRANSFER_CREATOR          // 独有
     ],
     [UserRole.ADMIN]: [

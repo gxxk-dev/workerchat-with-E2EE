@@ -852,6 +852,26 @@
                         <button onclick="updatePrivacyConfig()" class="admin-btn">保存设置</button>
                     </div>
                 </div>
+
+                <!-- 消息计数配置 -->
+                <div class="admin-section" id="messageCountSection" style="display:none;">
+                    <h3>消息计数设置</h3>
+                    <div class="privacy-form">
+                        <label class="privacy-label">
+                            <input type="checkbox" id="enableMessageCount">
+                            <span>启用消息计数功能</span>
+                        </label>
+                        <label class="privacy-label">
+                            <input type="checkbox" id="messageCountVisibleToUser">
+                            <span>User 可见消息计数</span>
+                        </label>
+                        <label class="privacy-label">
+                            <input type="checkbox" id="messageCountVisibleToGuest">
+                            <span>Guest 可见消息计数</span>
+                        </label>
+                        <button onclick="updateMessageCountConfig()" class="admin-btn">保存设置</button>
+                    </div>
+                </div>
                     </div>
                 </div>
                 <!-- 房间设置Tab结束 -->
@@ -1169,6 +1189,10 @@
 
                 case 'privacyConfigUpdated':
                     handlePrivacyConfigUpdated(data);
+                    break;
+
+                case 'messageCountConfigUpdated':
+                    handleMessageCountConfigUpdated(data);
                     break;
 
                 case 'creatorTransferred':
@@ -1606,6 +1630,29 @@
             };
             debugLog(`房间信息: ${getRoomTypeLabel(data.roomType)}, 角色: ${getRoleLabel(data.yourRole)}`);
 
+            // 处理消息计数
+            if (data.messageCount !== undefined) {
+                const storageKey = `lastSeenMessageCount_${roomId}`;
+                const lastSeen = localStorage.getItem(storageKey);
+
+                if (lastSeen === null) {
+                    // 首次加入，显示加入前的消息数
+                    if (data.messageCount > 0) {
+                        showNotification(`加入前已有 ${data.messageCount} 条消息记录`, 'warning');
+                    }
+                } else {
+                    // 重连，计算缺失的消息数
+                    const lastSeenCount = parseInt(lastSeen, 10);
+                    const missedCount = data.messageCount - lastSeenCount;
+                    if (missedCount > 0) {
+                        showNotification(`断联期间缺失了 ${missedCount} 条消息记录`, 'warning');
+                    }
+                }
+
+                // 更新localStorage
+                localStorage.setItem(storageKey, data.messageCount.toString());
+            }
+
             // 更新UI显示
             updateUIBasedOnRole();
 
@@ -1791,6 +1838,21 @@
             if (requireInviteToJoin) requireInviteToJoin.checked = data.config.requireInviteToJoin;
         }
 
+        // 处理消息计数配置更新
+        function handleMessageCountConfigUpdated(data) {
+            const actorName = getUserName(data.updatedBy);
+            showNotification(`${actorName} 更新了消息计数配置`);
+
+            // 更新消息计数配置UI
+            const enableMessageCount = document.getElementById('enableMessageCount');
+            const messageCountVisibleToUser = document.getElementById('messageCountVisibleToUser');
+            const messageCountVisibleToGuest = document.getElementById('messageCountVisibleToGuest');
+
+            if (enableMessageCount) enableMessageCount.checked = data.enableMessageCount;
+            if (messageCountVisibleToUser) messageCountVisibleToUser.checked = data.messageCountVisibleToUser;
+            if (messageCountVisibleToGuest) messageCountVisibleToGuest.checked = data.messageCountVisibleToGuest;
+        }
+
         // 处理Creator转让
         function handleCreatorTransferred(data) {
             const oldName = getUserName(data.oldCreatorId);
@@ -1839,6 +1901,7 @@
             const inviteSection = document.getElementById('inviteSection');
             const banListSection = document.getElementById('banListSection');
             const privacySection = document.getElementById('privacySection');
+            const messageCountSection = document.getElementById('messageCountSection');
 
             if (roomTypeSection) {
                 roomTypeSection.style.display = isCreator ? 'block' : 'none';
@@ -1854,6 +1917,10 @@
 
             if (privacySection) {
                 privacySection.style.display = (isPrivate && isCreator) ? 'block' : 'none';
+            }
+
+            if (messageCountSection) {
+                messageCountSection.style.display = isCreator ? 'block' : 'none';
             }
 
             // 更新转换按钮文本
@@ -2045,6 +2112,20 @@
                     guestCanViewUserList: guestCanViewUserList,
                     requireInviteToJoin: requireInviteToJoin
                 }
+            }));
+        }
+
+        // 更新消息计数配置
+        function updateMessageCountConfig() {
+            const enableMessageCount = document.getElementById('enableMessageCount')?.checked || false;
+            const messageCountVisibleToUser = document.getElementById('messageCountVisibleToUser')?.checked || false;
+            const messageCountVisibleToGuest = document.getElementById('messageCountVisibleToGuest')?.checked || false;
+
+            websocket.send(JSON.stringify({
+                type: 'updateMessageCountConfig',
+                enableMessageCount: enableMessageCount,
+                messageCountVisibleToUser: messageCountVisibleToUser,
+                messageCountVisibleToGuest: messageCountVisibleToGuest
             }));
         }
 
