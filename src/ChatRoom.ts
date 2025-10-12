@@ -389,7 +389,7 @@ export class ChatRoom {
         if (!user) return;
 
         if (!this.hasPermission(user, Permission.CONVERT_ROOM_TYPE)) {
-            this.sendPermissionDenied(webSocket, 'convertRoomType', '只有创建者可以转换房间类型');
+            this.sendPermissionDenied(webSocket, 'convertRoomType', '只有Creator可以转换房间类型');
             return;
         }
 
@@ -604,7 +604,7 @@ export class ChatRoom {
         if (!actor) return;
 
         if (!this.hasPermission(actor, Permission.UPDATE_PRIVACY_CONFIG)) {
-            this.sendPermissionDenied(webSocket, 'updatePrivacyConfig', '只有创建者可以修改隐私配置');
+            this.sendPermissionDenied(webSocket, 'updatePrivacyConfig', '只有Creator可以修改隐私配置');
             return;
         }
 
@@ -680,7 +680,7 @@ export class ChatRoom {
         if (!actor) return;
 
         if (!this.hasPermission(actor, Permission.TRANSFER_CREATOR)) {
-            this.sendPermissionDenied(webSocket, 'transferCreator', '只有创建者可以转让身份');
+            this.sendPermissionDenied(webSocket, 'transferCreator', '只有Creator可以转让身份');
             return;
         }
 
@@ -718,7 +718,7 @@ export class ChatRoom {
         if (!actor) return;
 
         if (!this.hasPermission(actor, Permission.UPDATE_MESSAGE_COUNT_CONFIG)) {
-            this.sendPermissionDenied(webSocket, 'updateMessageCountConfig', '只有创建者可以修改消息计数配置');
+            this.sendPermissionDenied(webSocket, 'updateMessageCountConfig', '只有Creator可以修改消息计数配置');
             return;
         }
 

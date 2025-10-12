@@ -816,9 +816,9 @@
                     <h3>邀请链接</h3>
                     <div class="invite-form">
                         <select id="inviteRole" class="admin-select">
-                            <option value="admin">管理员</option>
+                            <option value="admin">Admin</option>
                             <option value="user" selected>用户</option>
-                            <option value="guest">访客</option>
+                            <option value="guest">Guest</option>
                         </select>
                         <input type="number" id="inviteExpires" class="admin-input" placeholder="过期时间(小时)" min="1">
                         <input type="number" id="inviteMaxUsage" class="admin-input" placeholder="最大使用次数" min="1">
@@ -1099,7 +1099,7 @@
                 sendButtonEl.disabled = !canSendMessages;
 
                 if (!canSendMessages) {
-                    messageInputEl.placeholder = '访客无法发送消息';
+                    messageInputEl.placeholder = 'Guest无法发送消息';
                 } else {
                     messageInputEl.placeholder = '输入消息...';
                 }
@@ -1591,17 +1591,17 @@
         // 获取角色显示标签
         function getRoleLabel(role) {
             const labels = {
-                'creator': '⭐ 创建者',
-                'admin': '🛡️ 管理员',
-                'user': '👤 用户',
-                'guest': '👁️ 访客'
+                'creator': '⭐ Creator',
+                'admin': '🛡️ Admin',
+                'user': '👤 User',
+                'guest': '👁️ Guest'
             };
             return labels[role] || role;
         }
 
         // 获取房间类型标签
         function getRoomTypeLabel(type) {
-            return type === 'public' ? '公开房间' : '私密房间';
+            return type === 'public' ? 'Public Room' : 'Private Room';
         }
 
         // 检查是否有权限
@@ -1858,7 +1858,7 @@
             const oldName = getUserName(data.oldCreatorId);
             const newName = getUserName(data.newCreatorId);
 
-            showNotification(`${oldName} 将创建者身份转让给 ${newName}`);
+            showNotification(`${oldName} 将Creator身份转让给 ${newName}`);
 
             // 如果转让给自己，更新角色
             if (data.newCreatorId === userId) {
@@ -1933,10 +1933,10 @@
             const convertBtn = document.getElementById('convertRoomTypeBtn');
             if (convertBtn) {
                 if (roomInfo.roomType === 'public') {
-                    convertBtn.textContent = '转换为私密房间';
+                    convertBtn.textContent = '转换为 Private Room';
                     convertBtn.onclick = () => convertRoomType('private');
                 } else {
-                    convertBtn.textContent = '转换为公开房间';
+                    convertBtn.textContent = '转换为 Public Room';
                     convertBtn.onclick = () => convertRoomType('public');
                 }
             }
@@ -1972,7 +1972,7 @@
                 sendButtonEl.disabled = !canSendMessages;
 
                 if (!canSendMessages) {
-                    messageInputEl.placeholder = '访客无法发送消息';
+                    messageInputEl.placeholder = 'Guest无法发送消息';
                 } else {
                     messageInputEl.placeholder = '输入消息...';
                 }
@@ -2140,7 +2140,7 @@
             const targetUser = users.get(targetUserId);
             if (!targetUser) return;
 
-            if (!confirm(`确定要将创建者身份转让给 ${targetUser.name} 吗？此操作不可撤销！`)) return;
+            if (!confirm(`确定要将Creator身份转让给 ${targetUser.name} 吗？此操作不可撤销！`)) return;
 
             websocket.send(JSON.stringify({
                 type: 'transferCreator',
@@ -2306,7 +2306,7 @@
 
             // 检查是否有发送消息权限
             if (roomInfo.yourRole === 'guest') {
-                showNotification('访客无法发送消息', 'warning');
+                showNotification('Guest无法发送消息', 'warning');
                 return;
             }
             

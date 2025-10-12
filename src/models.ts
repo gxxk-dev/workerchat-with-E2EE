@@ -41,7 +41,7 @@ export interface IP {
 // 房间配置（删除 createdAt）
 export interface RoomConfig {
     type: RoomType;
-    creatorId: string;  // 创建者的密钥指纹
+    creatorId: string;  // Creator的密钥指纹
     privacy?: PrivacyConfig;  // 仅 Private 房间使用
     enableMessageCount?: boolean;  // 是否启用消息计数
     messageCount?: number;  // 当前消息总数
@@ -61,7 +61,7 @@ export interface InviteLink {
     id: string;              // 8字符邀请码
     roomId: string;          // 10字符房间ID
     role: UserRole;          // 加入后的角色
-    createdBy: string;       // 创建者密钥指纹
+    createdBy: string;       // Creator密钥指纹
     expiresAt?: number;      // 过期时间戳（可选）
     usageCount: number;      // 已使用次数
     maxUsage?: number;       // 最大使用次数（可选）
@@ -201,7 +201,7 @@ export interface RegisteredMessage {
 export interface RoomInfoMessage {
     type: 'roomInfo';
     roomType: RoomType;
-    isCreator: boolean;    // 当前用户是否为创建者
+    isCreator: boolean;    // 当前用户是否为Creator
     yourRole: UserRole;    // 你的角色
     privacy?: PrivacyConfig; // 隐私配置（仅 Private 房间）
     messageCount?: number; // 当前消息总数（根据权限返回）
