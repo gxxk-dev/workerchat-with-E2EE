@@ -205,6 +205,9 @@ export interface RoomInfoMessage {
     yourRole: UserRole;    // 你的角色
     privacy?: PrivacyConfig; // 隐私配置（仅 Private 房间）
     messageCount?: number; // 当前消息总数（根据权限返回）
+    enableMessageCount?: boolean; // 是否启用消息计数（仅Creator可见）
+    messageCountVisibleToUser?: boolean; // User是否可见消息计数（仅Creator可见）
+    messageCountVisibleToGuest?: boolean; // Guest是否可见消息计数（仅Creator可见）
 }
 
 // 房间类型已转换

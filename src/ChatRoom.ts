@@ -229,6 +229,13 @@ export class ChatRoom {
                 roomInfo.messageCount = this.roomConfig!.messageCount || 0;
             }
 
+            // 添加消息计数配置 (Creator总是可见)
+            if (userInfo.id === this.roomConfig!.creatorId) {
+                roomInfo.enableMessageCount = this.roomConfig!.enableMessageCount;
+                roomInfo.messageCountVisibleToUser = this.roomConfig!.messageCountVisibleToUser;
+                roomInfo.messageCountVisibleToGuest = this.roomConfig!.messageCountVisibleToGuest;
+            }
+
             webSocket.send(JSON.stringify(roomInfo));
 
             // 向所有用户广播用户列表更新
@@ -894,6 +901,13 @@ export class ChatRoom {
             // 根据权限添加消息计数
             if (this.canViewMessageCount(user)) {
                 roomInfo.messageCount = this.roomConfig.messageCount || 0;
+            }
+
+            // 添加消息计数配置 (Creator总是可见)
+            if (user.id === this.roomConfig.creatorId) {
+                roomInfo.enableMessageCount = this.roomConfig.enableMessageCount;
+                roomInfo.messageCountVisibleToUser = this.roomConfig.messageCountVisibleToUser;
+                roomInfo.messageCountVisibleToGuest = this.roomConfig.messageCountVisibleToGuest;
             }
 
             ws.send(JSON.stringify(roomInfo));

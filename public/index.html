@@ -1842,6 +1842,26 @@
                 localStorage.setItem(storageKey, data.messageCount.toString());
             }
 
+            // 同步消息计数配置到UI (如果服务器返回了这些配置)
+            if (data.enableMessageCount !== undefined) {
+                const enableMessageCount = document.getElementById('enableMessageCount');
+                if (enableMessageCount) {
+                    enableMessageCount.checked = data.enableMessageCount;
+                }
+            }
+            if (data.messageCountVisibleToUser !== undefined) {
+                const messageCountVisibleToUser = document.getElementById('messageCountVisibleToUser');
+                if (messageCountVisibleToUser) {
+                    messageCountVisibleToUser.checked = data.messageCountVisibleToUser;
+                }
+            }
+            if (data.messageCountVisibleToGuest !== undefined) {
+                const messageCountVisibleToGuest = document.getElementById('messageCountVisibleToGuest');
+                if (messageCountVisibleToGuest) {
+                    messageCountVisibleToGuest.checked = data.messageCountVisibleToGuest;
+                }
+            }
+
             // 更新UI显示
             updateUIBasedOnRole();
 
