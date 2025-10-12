@@ -360,13 +360,13 @@ export class ChatRoom {
     }
 
     private canViewMessageCount(user: UserInfo): boolean {
-        if (!this.roomConfig || !this.roomConfig.enableMessageCount) {
-            return false;
-        }
-
-        // Creator 和 Admin 总是可见
+        // Creator 和 Admin 总是可见(不受配置影响)
         if (user.role === UserRole.CREATOR || user.role === UserRole.ADMIN) {
             return true;
+        }
+
+        if (!this.roomConfig || !this.roomConfig.enableMessageCount) {
+            return false;
         }
 
         // User 根据配置可见

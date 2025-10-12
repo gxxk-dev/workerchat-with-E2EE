@@ -865,7 +865,7 @@
                             <input type="checkbox" id="messageCountVisibleToUser">
                             <span>User 可见消息计数</span>
                         </label>
-                        <label class="privacy-label">
+                        <label class="privacy-label" id="messageCountGuestLabel">
                             <input type="checkbox" id="messageCountVisibleToGuest">
                             <span>Guest 可见消息计数</span>
                         </label>
@@ -1921,6 +1921,12 @@
 
             if (messageCountSection) {
                 messageCountSection.style.display = isCreator ? 'block' : 'none';
+            }
+
+            // 在public room下隐藏Guest相关选项
+            const messageCountGuestLabel = document.getElementById('messageCountGuestLabel');
+            if (messageCountGuestLabel) {
+                messageCountGuestLabel.style.display = isPrivate ? 'flex' : 'none';
             }
 
             // 更新转换按钮文本
