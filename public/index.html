@@ -80,7 +80,11 @@
         .status-connected {
             background: var(--success);
         }
-        
+
+        .status-no-key {
+            background: var(--warning);
+        }
+
         .status-connecting {
             background: var(--warning);
         }
@@ -190,6 +194,82 @@
         .message-time {
             font-size: 0.75em;
             opacity: 0.7;
+        }
+
+        .message-number {
+            font-size: 0.7em;
+            opacity: 0.6;
+            color: #ffffff;
+            font-weight: normal;
+            margin-left: 8px;
+        }
+
+        /* 系统消息样式 */
+        .system-message {
+            padding: 8px 15px;
+            margin: 8px auto;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            font-size: 0.85em;
+            text-align: center;
+            font-style: italic;
+            max-width: 80%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .system-message.user-joined {
+            background: rgba(39, 174, 96, 0.2);
+            border-color: rgba(39, 174, 96, 0.3);
+            color: #2ecc71;
+        }
+
+        .system-message.user-reconnected {
+            background: rgba(52, 152, 219, 0.2);
+            border-color: rgba(52, 152, 219, 0.3);
+            color: #3498db;
+        }
+
+        /* 新手指导气泡 */
+        .newbie-guide {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #667eea;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            width: auto;
+            text-align: center;
+            animation: slideDown 0.5s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                transform: translateX(-50%) translateY(-100%);
+                opacity: 0;
+            }
+        }
+
+        .newbie-guide::before {
+            content: '💡';
+            margin-right: 8px;
         }
         
         .message-text {
@@ -1147,7 +1227,13 @@
         Object.defineProperty(window, 'isMobile', {
             get() { // 全局变量+Getter
                 return window.innerWidth <= 768;
-            }
+            },
+            configurable: true
+        });
+
+        window.addEventListener('resize', () => {
+            // 触发 getter 重新计算
+            const _ = window.isMobile;
         });
 
         // 获取房间ID
@@ -1237,14 +1323,17 @@
             
             websocket.onopen = () => {
                 debugLog('WebSocket连接已建立');
-                updateConnectionStatus('connected');
-                reconnectAttempts = 0;
-                
-                // 如果有公钥，立即注册
+
+                // 检查是否有公钥来确定连接状态
                 if (publicKey) {
+                    updateConnectionStatus('connected');
                     registerUser();
+                } else {
+                    updateConnectionStatus('no-key');
                 }
-                
+
+                reconnectAttempts = 0;
+
                 // 启用UI
                 enableUI();
             };
@@ -1284,6 +1373,9 @@
             switch (status) {
                 case 'connected':
                     connectionStatusEl.textContent = '已连接';
+                    break;
+                case 'no-key':
+                    connectionStatusEl.textContent = '已连接 (未设置密钥)';
                     break;
                 case 'connecting':
                     connectionStatusEl.textContent = '连接中...';
@@ -1365,6 +1457,10 @@
 
                 case 'encryptedMessage':
                     handleEncryptedMessage(data);
+                    break;
+
+                case 'systemMessage':
+                    handleSystemMessage(data);
                     break;
 
                 case 'userList':
@@ -1573,6 +1669,9 @@
         
         // 生成新密钥
         async function generateNewKeys() {
+            const generate6DigitNumber = () => {
+                return Math.floor(100000 + Math.random() * 900000).toString();
+            };
             try {
                 debugLog('开始生成新密钥对...');
                 showNotification('正在生成密钥，请稍候...', 'warning');
@@ -1582,7 +1681,7 @@
                     type: 'ecc',
                     curve: 'curve25519',
                     userIDs: [{ 
-                        name: prompt('请输入您的名字'), // 这里如果留空的话openpgp会自动生成一对 似乎不是未定义行为（？
+                        name: prompt('请输入您的名字') || `User${generate6DigitNumber()}`, // 这里如果留空的话openpgp会自动生成一对 似乎不是未定义行为（？
                         email: prompt('请输入您的邮箱')
                     }],
                     passphrase: ''
@@ -1648,7 +1747,8 @@
                     senderId: data.senderId,
                     text: decrypted,
                     timestamp: data.timestamp,
-                    isSelf: data.senderId === userId
+                    isSelf: data.senderId === userId,
+                    messageNumber: data.messageNumber
                 });
                 
                 debugLog('消息解密成功');
@@ -1752,7 +1852,7 @@
 
         
         // 显示消息
-        function displayMessage({ senderId, text, timestamp, isSelf }) {
+        function displayMessage({ senderId, text, timestamp, isSelf, messageNumber }) {
             const messageEl = document.createElement('div');
             messageEl.className = `message ${isSelf ? 'sent' : 'received'}`;
 
@@ -1775,7 +1875,7 @@
             // 创建发送者ID部分
             const senderIdEl = document.createElement('span');
             senderIdEl.className = 'sender-id';
-            senderIdEl.textContent = `[${senderId.slice(-16)}]`;
+            senderIdEl.textContent = ` [${senderId.slice(-16)}]`;
 
             // 将名称和ID添加到发送者名称元素中
             senderNameEl.appendChild(senderIdEl);
@@ -1784,6 +1884,14 @@
             const messageTimeEl = document.createElement('span');
             messageTimeEl.className = 'message-time';
             messageTimeEl.textContent = timeString;
+
+            // 创建消息编号部分（如果存在且用户有权限）
+            if (messageNumber && canSeeMessageNumber()) {
+                const messageNumberEl = document.createElement('span');
+                messageNumberEl.className = 'message-number';
+                messageNumberEl.textContent = `#${messageNumber}`;
+                messageTimeEl.appendChild(messageNumberEl);
+            }
 
             // 将名称和时间添加到发送者信息元素中
             senderInfoEl.appendChild(senderNameEl);
@@ -1816,6 +1924,70 @@
         // ========================
         // 群管理功能 - 工具函数
         // ========================
+
+        // 检查用户是否有权限查看消息编号
+        function canSeeMessageNumber() {
+            // Creator 和 Admin 总是可以看到
+            if (roomInfo.yourRole === 'creator' || roomInfo.yourRole === 'admin') {
+                return true;
+            }
+
+            // 根据房间配置和用户角色决定
+            if (roomInfo.yourRole === 'user') {
+                return roomInfo.messageCountVisibleToUser === true;
+            }
+
+            if (roomInfo.yourRole === 'guest') {
+                return roomInfo.messageCountVisibleToGuest === true;
+            }
+
+            return false;
+        }
+
+        // 处理系统消息
+        function handleSystemMessage(data) {
+            debugLog(`收到系统消息: ${data.messageType}`);
+
+            // 创建系统消息元素
+            const systemMessageEl = document.createElement('div');
+            systemMessageEl.className = `system-message ${data.messageType.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+            systemMessageEl.textContent = data.content;
+
+            messagesEl.appendChild(systemMessageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        // 显示新手指导
+        function showNewbieGuide() {
+            // 检查是否已显示过新手指导
+            const storageKey = `newbieGuideShown_${roomId || 'initial'}`;
+            if (localStorage.getItem(storageKey)) {
+                return;
+            }
+
+            // 创建新手指导气泡
+            const guideEl = document.createElement('div');
+            guideEl.className = 'newbie-guide';
+
+            // 根据设备类型显示不同的指导内容
+            if (window.isMobile) {
+                guideEl.innerHTML = '欢迎！<br/>请先单击左上标题展开面板，<br/>并在其中生成密钥以初始化身份！<br/>如果自备了PGP密钥对，<br/>也可以在左下角导入！';
+            } else {
+                guideEl.innerHTML = '欢迎！<br/>请在左下面板中生成密钥以初始化您的身份！<br/>（如果您自备了PGP密钥对，也可以在左下角导入）';
+            }
+
+            document.body.appendChild(guideEl);
+
+            // 5秒后自动移除
+            setTimeout(() => {
+                if (guideEl.parentNode) {
+                    guideEl.remove();
+                }
+            }, 5000);
+
+            // 标记为已显示
+            localStorage.setItem(storageKey, 'true');
+        }
 
         // 获取角色显示标签
         function getRoleLabel(role) {
@@ -1863,16 +2035,22 @@
             if (data.messageCount !== undefined) {
                 const storageKey = `lastSeenMessageCount_${roomId}`;
                 const lastSeen = localStorage.getItem(storageKey);
+                const hasConnectedBefore = localStorage.getItem(`hasConnectedBefore_${roomId}`) === 'true';
 
-                if (lastSeen === null) {
-                    // 首次加入，显示加入前的消息数
+                if (!hasConnectedBefore) {
+                    // 标记用户已经连接过此房间
+                    localStorage.setItem(`hasConnectedBefore_${roomId}`, 'true');
+
+                    // 首次连接，显示加入前的消息数
                     if (data.messageCount > 0) {
                         showNotification(`加入前已有 ${data.messageCount} 条消息记录`, 'warning');
                     }
-                } else {
+                } else if (lastSeen !== null) {
                     // 重连，计算缺失的消息数
                     const lastSeenCount = parseInt(lastSeen, 10);
                     const missedCount = data.messageCount - lastSeenCount;
+
+                    // 只有在真正缺失消息时才提示
                     if (missedCount > 0) {
                         showNotification(`断联期间缺失了 ${missedCount} 条消息记录`, 'warning');
                     }
@@ -2612,7 +2790,7 @@
             sendButtonEl.addEventListener('click', sendMessage);
             messageInputEl.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
-                    if (!isMobile) e.preventDefault();
+                    if (!window.isMobile) e.preventDefault();
                     sendMessage();
                 }
             });
@@ -2646,7 +2824,6 @@
                 });
             });
         }
-
         // 面板切换处理
         function setupSidebarToggle() {
             const roomName = document.getElementById('roomName');
@@ -2751,13 +2928,16 @@
             
             // 尝试加载本地密钥
             await loadLocalKeys();
-            
+
             // 连接WebSocket
             await connectWebSocket();
-            
+
             // 设置事件监听器
             setupEventListeners();
-            
+
+            // 显示新手指导（页面加载完成后立即显示）
+            setTimeout(() => showNewbieGuide(), 500); // 延迟500ms确保界面完全渲染
+
             // 输入区域自动高度调整
             messageInputEl.addEventListener('input', function() {
                 this.style.height = 'auto';

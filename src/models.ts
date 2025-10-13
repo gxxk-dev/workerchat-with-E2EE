@@ -322,6 +322,15 @@ export interface EncryptedMessage {
     senderId: string;
     encryptedData: string;
     timestamp: number;
+    messageNumber?: number; // 消息编号，可选字段保持向后兼容
+}
+
+// 系统提示消息
+export interface SystemMessage {
+    type: 'systemMessage';
+    content: string;
+    timestamp: number;
+    messageType: 'userJoined' | 'userReconnected' | 'newbieGuide' | 'info';
 }
 
 // 错误消息

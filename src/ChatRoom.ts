@@ -10,6 +10,7 @@ import {
     InviteLinkGeneratedMessage, BanListMessage, InviteLinksMessage,
     PrivacyConfigUpdatedMessage, CreatorTransferredMessage, PermissionDeniedMessage,
     UpdateMessageCountConfigMessage, MessageCountConfigUpdatedMessage,
+    SystemMessage,
     ROLE_PERMISSIONS
 } from "./models";
 import { readKey } from "openpgp";
@@ -196,6 +197,8 @@ export class ChatRoom {
 
             // 检查用户是否已存在
             const existingUser = this.findUserById(userInfo.id);
+            const isReconnecting = !!existingUser;
+
             if (existingUser && existingUser.webSocket !== webSocket) {
                 // 更新现有用户的连接
                 this.users.delete(existingUser.webSocket);
@@ -246,6 +249,34 @@ export class ChatRoom {
 
             // 向所有用户广播用户列表更新
             this.broadcastUserList();
+
+            // 发送用户加入/重连的系统提示消息
+            const currentMessageCount = this.roomConfig!.messageCount || 0;
+            if (isReconnecting) {
+                if (currentMessageCount > 0) {
+                    this.broadcastSystemMessage(
+                        `${userInfo.name} 重新连接到了房间 (期间可能错过了一些消息)`,
+                        'userReconnected'
+                    );
+                } else {
+                    this.broadcastSystemMessage(
+                        `${userInfo.name} 重新连接到了房间`,
+                        'userReconnected'
+                    );
+                }
+            } else {
+                if (currentMessageCount > 0) {
+                    this.broadcastSystemMessage(
+                        `${userInfo.name} 加入了房间 (加入前已有 ${currentMessageCount} 条消息)`,
+                        'userJoined'
+                    );
+                } else {
+                    this.broadcastSystemMessage(
+                        `${userInfo.name} 加入了房间`,
+                        'userJoined'
+                    );
+                }
+            }
 
         } catch (error: any) {
             this.sendError(webSocket, error.message || 'Registration failed');
@@ -855,16 +886,18 @@ export class ChatRoom {
             type: 'encryptedMessage',
             senderId: sender.id,
             encryptedData: message.encryptedData,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            messageNumber: undefined // 先设为undefined，下面会赋值
         };
-
-        this.broadcast(broadcastMessage);
 
         // 递增消息计数（如果启用）
         if (this.roomConfig && this.roomConfig.enableMessageCount) {
             this.roomConfig.messageCount = (this.roomConfig.messageCount || 0) + 1;
+            broadcastMessage.messageNumber = this.roomConfig.messageCount;
             await this.saveRoomConfig();
         }
+
+        this.broadcast(broadcastMessage);
     }
 
     private async handleDisconnect(webSocket: WebSocket): Promise<void> {
@@ -890,6 +923,17 @@ export class ChatRoom {
 
         // 清空持久化存储
         await this.state.storage.deleteAll();
+    }
+
+    private broadcastSystemMessage(content: string, messageType: 'userJoined' | 'userReconnected' | 'newbieGuide' | 'info') {
+        const systemMessage: SystemMessage = {
+            type: 'systemMessage',
+            content: content,
+            timestamp: Date.now(),
+            messageType: messageType
+        };
+
+        this.broadcast(systemMessage);
     }
 
     private broadcast(message: any): void {
