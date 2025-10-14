@@ -91,6 +91,10 @@ export class ChatRoom {
 
     private async handleMessage(webSocket: WebSocket, message: any): Promise<void> {
         switch (message.type) {
+            case 'ping':
+                // 心跳ping,立即回复pong
+                this.sendPong(webSocket);
+                break;
             case 'register':
                 await this.handleRegister(webSocket, message);
                 break;
@@ -1008,6 +1012,14 @@ export class ChatRoom {
 
         try {
             webSocket.send(JSON.stringify(message));
+        } catch (error) {
+            // 连接已关闭，忽略错误
+        }
+    }
+
+    private sendPong(webSocket: WebSocket): void {
+        try {
+            webSocket.send(JSON.stringify({ type: 'pong' }));
         } catch (error) {
             // 连接已关闭，忽略错误
         }

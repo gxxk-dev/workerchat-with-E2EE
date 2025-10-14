@@ -1170,6 +1170,8 @@
         let reconnectAttempts = 0;
         let maxReconnectAttempts = 5;
         let isMobile = null; // 占位符 具体判断看后面util部分的getter
+        let heartbeatInterval = null; // 心跳定时器
+        let heartbeatTimeout = null; // 心跳超时定时器
 
         // 房间信息
         let roomInfo = {
@@ -1320,7 +1322,7 @@
 
         function setupWebSocketHandlers() {
             if (!websocket) return;
-            
+
             websocket.onopen = () => {
                 debugLog('WebSocket连接已建立');
 
@@ -1336,22 +1338,35 @@
 
                 // 启用UI
                 enableUI();
+
+                // 启动心跳机制
+                startHeartbeat();
             };
-            
+
             websocket.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
+
+                    // 处理pong响应,重置心跳超时
+                    if (data.type === 'pong') {
+                        resetHeartbeatTimeout();
+                        return;
+                    }
+
                     handleWebSocketMessage(data);
                 } catch (error) {
                     debugLog('解析消息失败: ' + error.message);
                 }
             };
-            
+
             websocket.onclose = () => {
                 debugLog('WebSocket连接已关闭');
                 updateConnectionStatus('disconnected');
                 disableUI();
-                
+
+                // 停止心跳
+                stopHeartbeat();
+
                 // 自动重连
                 if (reconnectAttempts < maxReconnectAttempts) {
                     reconnectAttempts++;
@@ -1361,11 +1376,52 @@
                     }, 2000 * reconnectAttempts);
                 }
             };
-            
+
             websocket.onerror = (error) => {
                 debugLog("WebSocket错误: " + error);
                 showNotification('连接错误', 'error');
             };
+        }
+
+        // ========================
+        // 心跳机制
+        // ========================
+
+        function startHeartbeat() {
+            // 清除已存在的定时器
+            stopHeartbeat();
+
+            // 每50秒发送一次ping
+            heartbeatInterval = setInterval(() => {
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    debugLog('发送心跳ping');
+                    websocket.send(JSON.stringify({ type: 'ping' }));
+
+                    // 设置15秒超时,如果没收到pong就认为连接断开
+                    heartbeatTimeout = setTimeout(() => {
+                        debugLog('心跳超时,关闭连接');
+                        websocket.close();
+                    }, 15000);
+                }
+            }, 50000);
+        }
+
+        function resetHeartbeatTimeout() {
+            if (heartbeatTimeout) {
+                clearTimeout(heartbeatTimeout);
+                heartbeatTimeout = null;
+            }
+        }
+
+        function stopHeartbeat() {
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+            }
+            if (heartbeatTimeout) {
+                clearTimeout(heartbeatTimeout);
+                heartbeatTimeout = null;
+            }
         }
         
         function updateConnectionStatus(status) {
