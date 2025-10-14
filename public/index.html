@@ -2027,7 +2027,9 @@
                 roomType: data.roomType,
                 isCreator: data.isCreator,
                 yourRole: data.yourRole,
-                privacy: data.privacy
+                privacy: data.privacy,
+                messageCountVisibleToUser: data.messageCountVisibleToUser,
+                messageCountVisibleToGuest: data.messageCountVisibleToGuest
             };
             debugLog(`房间信息: ${getRoomTypeLabel(data.roomType)}, 角色: ${getRoleLabel(data.yourRole)}`);
 

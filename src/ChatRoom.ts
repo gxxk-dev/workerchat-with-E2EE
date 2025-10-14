@@ -238,12 +238,10 @@ export class ChatRoom {
                 roomInfo.messageCount = this.roomConfig!.messageCount || 0;
             }
 
-            // 添加消息计数配置 (Creator总是可见)
-            if (userInfo.id === this.roomConfig!.creatorId) {
-                roomInfo.enableMessageCount = this.roomConfig!.enableMessageCount;
-                roomInfo.messageCountVisibleToUser = this.roomConfig!.messageCountVisibleToUser;
-                roomInfo.messageCountVisibleToGuest = this.roomConfig!.messageCountVisibleToGuest;
-            }
+            // 添加消息计数配置 (所有用户都需要这些配置来判断是否显示编号)
+            roomInfo.enableMessageCount = this.roomConfig!.enableMessageCount;
+            roomInfo.messageCountVisibleToUser = this.roomConfig!.messageCountVisibleToUser;
+            roomInfo.messageCountVisibleToGuest = this.roomConfig!.messageCountVisibleToGuest;
 
             webSocket.send(JSON.stringify(roomInfo));
 
@@ -979,12 +977,10 @@ export class ChatRoom {
                 roomInfo.messageCount = this.roomConfig.messageCount || 0;
             }
 
-            // 添加消息计数配置 (Creator总是可见)
-            if (user.id === this.roomConfig.creatorId) {
-                roomInfo.enableMessageCount = this.roomConfig.enableMessageCount;
-                roomInfo.messageCountVisibleToUser = this.roomConfig.messageCountVisibleToUser;
-                roomInfo.messageCountVisibleToGuest = this.roomConfig.messageCountVisibleToGuest;
-            }
+            // 添加消息计数配置 (所有用户都需要这些配置来判断是否显示编号)
+            roomInfo.enableMessageCount = this.roomConfig.enableMessageCount;
+            roomInfo.messageCountVisibleToUser = this.roomConfig.messageCountVisibleToUser;
+            roomInfo.messageCountVisibleToGuest = this.roomConfig.messageCountVisibleToGuest;
 
             ws.send(JSON.stringify(roomInfo));
         }
