@@ -25,6 +25,8 @@ export class ChatRoom {
     private banList: BanRecord[] = [];
     private origin: string = ''; // 保存请求的origin
     private userRoles: Map<string, UserRole> = new Map(); // 持久化用户角色映射
+    private lastPongTimes: Map<WebSocket, number> = new Map(); // 记录每个连接最后收到pong的时间
+    private heartbeatInterval: ReturnType<typeof setInterval> | null = null; // 心跳定时器
 
     constructor(state: DurableObjectState) {
         this.state = state;
@@ -37,6 +39,9 @@ export class ChatRoom {
         await this.loadInvites();
         await this.loadBanList();
         await this.loadUserRoles();
+
+        // 启动心跳机制
+        this.startHeartbeat();
     }
 
     async fetch(request: Request): Promise<Response> {
@@ -94,6 +99,10 @@ export class ChatRoom {
             case 'ping':
                 // 心跳ping,立即回复pong
                 this.sendPong(webSocket);
+                break;
+            case 'pong':
+                // 收到客户端的pong响应,更新最后响应时间
+                this.lastPongTimes.set(webSocket, Date.now());
                 break;
             case 'register':
                 await this.handleRegister(webSocket, message);
@@ -1186,5 +1195,51 @@ export class ChatRoom {
             hash = hash & hash;
         }
         return Math.abs(hash).toString(16).padStart(8, '0');
+    }
+
+    // ========== 心跳机制 ==========
+
+    private startHeartbeat(): void {
+        // 每30秒发送一次心跳
+        this.heartbeatInterval = setInterval(() => {
+            const now = Date.now();
+            const TIMEOUT_MS = 60000; // 60秒超时
+
+            for (const [ws, user] of this.users) {
+                // 发送 ping 给客户端
+                this.sendPing(ws);
+
+                // 检查是否超时未响应
+                const lastPongTime = this.lastPongTimes.get(ws);
+                if (lastPongTime && (now - lastPongTime) > TIMEOUT_MS) {
+                    // 超时,断开连接
+                    try {
+                        ws.close(1000, 'Connection timeout');
+                    } catch (error) {
+                        // 忽略错误
+                    }
+                    this.handleDisconnect(ws);
+                }
+            }
+        }, 30000); // 30秒间隔
+    }
+
+    private stopHeartbeat(): void {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
+    }
+
+    private sendPing(webSocket: WebSocket): void {
+        try {
+            webSocket.send(JSON.stringify({ type: 'ping' }));
+            // 记录发送 ping 的时间,如果是首次发送则初始化
+            if (!this.lastPongTimes.has(webSocket)) {
+                this.lastPongTimes.set(webSocket, Date.now());
+            }
+        } catch (error) {
+            // 连接已关闭，忽略错误
+        }
     }
 }

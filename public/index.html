@@ -75,6 +75,12 @@
             font-size: 0.85em;
             margin-bottom: 15px;
             text-align: center;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .connection-status:hover {
+            opacity: 0.8;
         }
         
         .status-connected {
@@ -1347,6 +1353,13 @@
                 try {
                     const data = JSON.parse(event.data);
 
+                    // 处理服务端的ping请求,立即回复pong
+                    if (data.type === 'ping') {
+                        debugLog('收到服务端ping,回复pong');
+                        websocket.send(JSON.stringify({ type: 'pong' }));
+                        return;
+                    }
+
                     // 处理pong响应,重置心跳超时
                     if (data.type === 'pong') {
                         resetHeartbeatTimeout();
@@ -1431,7 +1444,7 @@
                     connectionStatusEl.textContent = '已连接';
                     break;
                 case 'no-key':
-                    connectionStatusEl.textContent = '已连接 (未设置密钥)';
+                    connectionStatusEl.textContent = '已连接';
                     break;
                 case 'connecting':
                     connectionStatusEl.textContent = '连接中...';
@@ -1439,6 +1452,29 @@
                 case 'disconnected':
                     connectionStatusEl.textContent = '未连接';
                     break;
+            }
+        }
+
+        // 手动断开/重连
+        function handleConnectionStatusClick() {
+            if (!websocket) return;
+
+            // 如果已连接或正在连接,则断开
+            if (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING) {
+                if (confirm('确定要断开连接吗？')) {
+                    debugLog('用户手动断开连接');
+                    // 防止自动重连
+                    reconnectAttempts = maxReconnectAttempts;
+                    websocket.close();
+                    showNotification('已断开连接');
+                }
+            }
+            // 如果已断开,则尝试重新连接
+            else if (websocket.readyState === WebSocket.CLOSED) {
+                debugLog('用户尝试手动重连');
+                reconnectAttempts = 0; // 重置重连次数
+                connectWebSocket();
+                showNotification('正在重新连接...', 'warning');
             }
         }
         
@@ -2016,7 +2052,7 @@
         // 显示新手指导
         function showNewbieGuide() {
             // 检查是否已显示过新手指导
-            const storageKey = `newbieGuideShown_${roomId || 'initial'}`;
+            const storageKey = `newbieGuideShown_initial`;
             if (localStorage.getItem(storageKey)) {
                 return;
             }
@@ -2852,7 +2888,8 @@
                     sendMessage();
                 }
             });
-            
+            connectionStatusEl.addEventListener('click', handleConnectionStatusClick);
+
             generateKeysBtn.addEventListener('click', generateNewKeys);
             importPublicKeyBtn.addEventListener('click', () => importKey('public'));
             importPrivateKeyBtn.addEventListener('click', () => importKey('private'));
