@@ -22,7 +22,14 @@ function updateConnectionStatus(status) {
 
 // 手动断开/重连
 function handleConnectionStatusClick() {
-    if (!websocket) return;
+    // 如果websocket不存在或已关闭,则尝试重新连接
+    if (!websocket || websocket.readyState === WebSocket.CLOSED || websocket.readyState === WebSocket.CLOSING) {
+        debugLog('用户尝试手动重连');
+        reconnectAttempts = 0; // 重置重连次数
+        connectWebSocket();
+        showNotification('正在重新连接...', 'warning');
+        return;
+    }
 
     // 如果已连接或正在连接,则断开
     if (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING) {
@@ -31,15 +38,10 @@ function handleConnectionStatusClick() {
             // 防止自动重连
             reconnectAttempts = maxReconnectAttempts;
             websocket.close();
+            // 立即调用断开连接的UI处理
+            handleDisconnectedUI();
             showNotification('已断开连接');
         }
-    }
-    // 如果已断开,则尝试重新连接
-    else if (websocket.readyState === WebSocket.CLOSED) {
-        debugLog('用户尝试手动重连');
-        reconnectAttempts = 0; // 重置重连次数
-        connectWebSocket();
-        showNotification('正在重新连接...', 'warning');
     }
 }
 

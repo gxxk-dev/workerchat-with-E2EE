@@ -25,6 +25,7 @@ export class ChatRoom {
     private banList: BanRecord[] = [];
     private origin: string = ''; // 保存请求的origin
     private userRoles: Map<string, UserRole> = new Map(); // 持久化用户角色映射
+    private userLastSeenMessageCount: Map<string, number> = new Map(); // 用户最后看到的消息计数
     private lastPongTimes: Map<WebSocket, number> = new Map(); // 记录每个连接最后收到pong的时间
     private heartbeatInterval: ReturnType<typeof setInterval> | null = null; // 心跳定时器
 
@@ -39,6 +40,7 @@ export class ChatRoom {
         await this.loadInvites();
         await this.loadBanList();
         await this.loadUserRoles();
+        await this.loadUserLastSeenMessageCount();
 
         // 启动心跳机制
         this.startHeartbeat();
@@ -208,10 +210,11 @@ export class ChatRoom {
                 role: assignedRole
             };
 
-            // 检查用户是否已存在
-            const existingUser = this.findUserById(userInfo.id);
-            const isReconnecting = !!existingUser;
+            // 检查用户是否重连(基于持久化的角色数据)
+            const isReconnecting = this.userRoles.has(userProfile.id);
 
+            // 检查用户是否已在线(同一用户的不同连接)
+            const existingUser = this.findUserById(userInfo.id);
             if (existingUser && existingUser.webSocket !== webSocket) {
                 // 更新现有用户的连接
                 this.users.delete(existingUser.webSocket);
@@ -266,7 +269,7 @@ export class ChatRoom {
             if (isReconnecting) {
                 if (currentMessageCount > 0) {
                     this.broadcastSystemMessage(
-                        `${userInfo.name} 重新连接到了房间 (期间可能错过了一些消息)`,
+                        `${userInfo.name} 重新连接到了房间 (错过 ${currentMessageCount} 条消息)`,
                         'userReconnected'
                     );
                 } else {
@@ -278,7 +281,7 @@ export class ChatRoom {
             } else {
                 if (currentMessageCount > 0) {
                     this.broadcastSystemMessage(
-                        `${userInfo.name} 加入了房间 (加入前已有 ${currentMessageCount} 条消息)`,
+                        `${userInfo.name} 加入了房间 (错过 ${currentMessageCount} 条消息)`,
                         'userJoined'
                     );
                 } else {
@@ -912,6 +915,14 @@ export class ChatRoom {
     }
 
     private async handleDisconnect(webSocket: WebSocket): Promise<void> {
+        // 在删除用户前,保存该用户最后看到的消息计数
+        const user = this.users.get(webSocket);
+        if (user && this.roomConfig) {
+            const currentCount = this.roomConfig.messageCount || 0;
+            this.userLastSeenMessageCount.set(user.id, currentCount);
+            await this.saveUserLastSeenMessageCount();
+        }
+
         this.sessions.delete(webSocket);
         this.users.delete(webSocket);
 
@@ -1099,6 +1110,18 @@ export class ChatRoom {
         const rolesObj = Object.fromEntries(this.userRoles);
         await this.state.storage.put('userRoles', rolesObj);
     }
+    private async loadUserLastSeenMessageCount(): Promise<void> {
+        const lastSeenData = await this.state.storage.get<Record<string, number>>('userLastSeenMessageCount');
+        if (lastSeenData) {
+            this.userLastSeenMessageCount = new Map(Object.entries(lastSeenData));
+        }
+    }
+
+    private async saveUserLastSeenMessageCount(): Promise<void> {
+        const lastSeenObj = Object.fromEntries(this.userLastSeenMessageCount);
+        await this.state.storage.put('userLastSeenMessageCount', lastSeenObj);
+    }
+
 
     // ========== 工具方法 ==========
 
