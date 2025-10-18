@@ -19,6 +19,7 @@ body {
     background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
     color: var(--light);
     min-height: 100vh;
+    min-height: 100dvh; /* 动态视口高度,适应移动浏览器栏 */
     padding: 0;
     margin: 0;
 }
@@ -30,6 +31,7 @@ body {
     grid-template-columns: 300px 1fr;
     gap: 20px;
     height: 100vh;
+    height: 100dvh; /* 动态视口高度,适应移动浏览器栏 */
     padding: 15px;
 }
 
@@ -489,6 +491,7 @@ button:disabled {
     .panel {
         border-radius: 0;
         height: 100vh;
+        height: 100dvh; /* 动态视口高度,适应移动浏览器栏 */
         box-shadow: none;
         border: none;
     }
@@ -506,9 +509,10 @@ button:disabled {
     .manage-area {
         position: fixed;
         top: 0;
-        left: -100%; 
+        left: -100%;
         width: 80%;
         height: 100vh !important;
+        height: 100dvh !important; /* 动态视口高度,适应移动浏览器栏 */
         border-radius: 0 15px 15px 0;
         z-index: 101;
         transition: left 0.3s ease-out;
