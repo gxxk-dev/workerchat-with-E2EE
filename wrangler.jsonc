@@ -23,9 +23,10 @@
     		{
     			"name": "CHAT_ROOMS",        // 聊天室Durable Object绑定名称
     			"class_name": "ChatRoom", // TS类名
+    			
     		}
-    ]
-  },
+    	]
+  	},
 	"observability": {
 		"enabled": true
 	}

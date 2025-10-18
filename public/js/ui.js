@@ -33,15 +33,13 @@ function handleConnectionStatusClick() {
 
     // 如果已连接或正在连接,则断开
     if (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING) {
-        if (confirm('确定要断开连接吗？')) {
-            debugLog('用户手动断开连接');
-            // 防止自动重连
-            reconnectAttempts = maxReconnectAttempts;
-            websocket.close();
-            // 立即调用断开连接的UI处理
-            handleDisconnectedUI();
-            showNotification('已断开连接');
-        }
+        debugLog('用户手动断开连接');
+        // 防止自动重连
+        reconnectAttempts = maxReconnectAttempts;
+        websocket.close();
+        // 立即调用断开连接的UI处理
+        handleDisconnectedUI();
+        showNotification('已断开连接');
     }
 }
 

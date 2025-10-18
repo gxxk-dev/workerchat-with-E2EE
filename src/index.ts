@@ -69,9 +69,9 @@ export default {
                 });
             }
 
-            // 获取或创建 Durable Object 实例
+            // 获取或创建 Durable Object 实例(指定在亚太区域创建)
             const durableObjectId = env.CHAT_ROOMS.idFromName(roomId);
-            const durableObject = env.CHAT_ROOMS.get(durableObjectId);
+            const durableObject = env.CHAT_ROOMS.get(durableObjectId, { locationHint: "apac" });
 
             // 转发 WebSocket 请求到 Durable Object
             return durableObject.fetch(request);
