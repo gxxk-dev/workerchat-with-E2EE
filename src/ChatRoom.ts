@@ -921,6 +921,12 @@ export class ChatRoom {
             const currentCount = this.roomConfig.messageCount || 0;
             this.userLastSeenMessageCount.set(user.id, currentCount);
             await this.saveUserLastSeenMessageCount();
+
+            // 向其他用户广播断开连接消息
+            this.broadcastSystemMessage(
+                `${user.name} 断开连接`,
+                'userDisconnected'
+            );
         }
 
         this.sessions.delete(webSocket);
@@ -947,7 +953,7 @@ export class ChatRoom {
         await this.state.storage.deleteAll();
     }
 
-    private broadcastSystemMessage(content: string, messageType: 'userJoined' | 'userReconnected' | 'newbieGuide' | 'info') {
+    private broadcastSystemMessage(content: string, messageType: 'userJoined' | 'userReconnected' | 'userDisconnected' | 'newbieGuide' | 'info') {
         const systemMessage: SystemMessage = {
             type: 'systemMessage',
             content: content,

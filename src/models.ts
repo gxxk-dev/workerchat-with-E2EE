@@ -330,7 +330,7 @@ export interface SystemMessage {
     type: 'systemMessage';
     content: string;
     timestamp: number;
-    messageType: 'userJoined' | 'userReconnected' | 'newbieGuide' | 'info';
+    messageType: 'userJoined' | 'userReconnected' | 'userDisconnected' | 'newbieGuide' | 'info';
 }
 
 // 错误消息

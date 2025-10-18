@@ -239,6 +239,14 @@ function handleDisconnectedUI() {
 
     // 更新用户列表显示为断开连接状态
     userListEl.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">等待连接...</div>';
+
+    // 在聊天窗口显示断开连接提示
+    handleSystemMessage({
+        type: 'systemMessage',
+        content: '您已断开连接',
+        timestamp: Date.now(),
+        messageType: 'userDisconnected'
+    });
 }
 
 // 发送消息
