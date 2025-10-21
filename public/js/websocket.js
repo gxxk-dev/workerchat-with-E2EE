@@ -101,10 +101,14 @@ function registerUser() {
     }
 }
 
-function handleWebSocketMessage(data) {
+async function handleWebSocketMessage(data) {
     debugLog('收到消息: ' + data.type);
 
     switch (data.type) {
+        case 'authChallenge':
+            await handleAuthChallenge(data);
+            break;
+
         case 'registered':
         case 'authenticated':
             // 始终使用服务器返回的ID作为userId(用于消息识别)
@@ -312,5 +316,42 @@ async function sendMessage() {
     } catch (error) {
         debugLog('加密失败: ' + error.message);
         showNotification('加密失败: ' + error.message, 'error');
+    }
+}
+
+// 处理服务器质询
+async function handleAuthChallenge(data) {
+    debugLog('收到服务器质询');
+
+    if (!privateKey) {
+        showNotification('未找到私钥，无法验证身份', 'error');
+        return;
+    }
+
+    try {
+        // 使用私钥解密质询
+        const encryptedMessage = await openpgp.readMessage({
+            armoredMessage: data.encryptedChallenge
+        });
+
+        const privKey = await openpgp.readPrivateKey({ armoredKey: privateKey });
+
+        const { data: decrypted } = await openpgp.decrypt({
+            message: encryptedMessage,
+            decryptionKeys: privKey
+        });
+
+        debugLog('质询解密成功');
+
+        // 发送质询响应
+        websocket.send(JSON.stringify({
+            type: 'challengeResponse',
+            response: decrypted
+        }));
+
+    } catch (error) {
+        debugLog('质询验证失败: ' + error.message);
+        showNotification('密钥验证失败，请确保使用正确的密钥对', 'error');
+        websocket.close();
     }
 }

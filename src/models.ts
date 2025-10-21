@@ -103,6 +103,12 @@ export interface RegisterMessage {
     inviteId?: string;     // 邀请码（从 URL 参数获取）
 }
 
+// 质询响应（客户端解密质询后发送）
+export interface ChallengeResponseMessage {
+    type: 'challengeResponse';
+    response: string;      // 解密后的质询字符串
+}
+
 // 转换房间类型
 export interface ConvertRoomTypeMessage {
     type: 'convertRoomType';
@@ -189,6 +195,12 @@ export interface ChatMessage {
 }
 
 // ========== 服务器 -> 客户端 消息 ==========
+
+// 身份验证质询（服务端发送加密质询）
+export interface AuthChallengeMessage {
+    type: 'authChallenge';
+    encryptedChallenge: string;  // 使用用户公钥加密的质询
+}
 
 // 注册成功（新增 assignedRole）
 export interface RegisteredMessage {

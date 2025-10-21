@@ -10,10 +10,19 @@ import {
     InviteLinkGeneratedMessage, BanListMessage, InviteLinksMessage,
     PrivacyConfigUpdatedMessage, CreatorTransferredMessage, PermissionDeniedMessage,
     UpdateMessageCountConfigMessage, MessageCountConfigUpdatedMessage,
-    SystemMessage,
+    SystemMessage, AuthChallengeMessage, ChallengeResponseMessage,
     ROLE_PERMISSIONS
 } from "./models";
 import { readKey } from "openpgp";
+import {encrypt, createMessage} from "openpgp";
+
+// 质询会话数据结构
+interface ChallengeSession {
+    challenge: string;       // 原始质询字符串
+    timestamp: number;       // 创建时间戳
+    publicKey: string;       // 用户公钥
+    inviteId?: string;       // 邀请码（可选）
+}
 
 export class ChatRoom {
     private state: DurableObjectState;
@@ -28,6 +37,7 @@ export class ChatRoom {
     private userLastSeenMessageCount: Map<string, number> = new Map(); // 用户最后看到的消息计数
     private lastPongTimes: Map<WebSocket, number> = new Map(); // 记录每个连接最后收到pong的时间
     private heartbeatInterval: ReturnType<typeof setInterval> | null = null; // 心跳定时器
+    private challengeSessions: Map<WebSocket, ChallengeSession> = new Map(); // 质询会话管理
 
     constructor(state: DurableObjectState) {
         this.state = state;
@@ -109,6 +119,9 @@ export class ChatRoom {
             case 'register':
                 await this.handleRegister(webSocket, message);
                 break;
+            case 'challengeResponse':
+                await this.handleChallengeResponse(webSocket, message);
+                break;
             case 'getUsers':
                 this.handleGetUsers(webSocket);
                 break;
@@ -158,6 +171,9 @@ export class ChatRoom {
 
     private async handleRegister(webSocket: WebSocket, message: RegisterMessage): Promise<void> {
         try {
+            // 清理过期的质询会话
+            this.cleanupExpiredChallenges();
+
             if (!message.publicKey || typeof message.publicKey !== 'string') {
                 this.sendError(webSocket, 'Invalid public key format');
                 return;
@@ -169,7 +185,7 @@ export class ChatRoom {
                 return;
             }
 
-            // 从公钥中提取用户信息
+            // 从公钥中提取用户信息（用于检查封禁）
             const userProfile = await this.extractUserProfile(message.publicKey);
 
             // 检查封禁列表
@@ -179,13 +195,78 @@ export class ChatRoom {
                 return;
             }
 
+            // 生成随机质询字符串（128字节）
+            const challenge = this.generateChallenge();
+
+            // 使用用户公钥加密质询
+            const publicKey = await readKey({ armoredKey: message.publicKey });
+            const encryptedChallenge = await encrypt({
+                message: await createMessage({ text: challenge }),
+                encryptionKeys: publicKey,
+                format: 'armored'
+            });
+
+            // 保存质询会话
+            this.challengeSessions.set(webSocket, {
+                challenge: challenge,
+                timestamp: Date.now(),
+                publicKey: message.publicKey,
+                inviteId: message.inviteId
+            });
+
+            // 发送加密质询给客户端
+            const challengeMessage: AuthChallengeMessage = {
+                type: 'authChallenge',
+                encryptedChallenge: encryptedChallenge
+            };
+            webSocket.send(JSON.stringify(challengeMessage));
+
+        } catch (error: any) {
+            this.sendError(webSocket, error.message || 'Challenge generation failed');
+            webSocket.close();
+        }
+    }
+
+    private async handleChallengeResponse(webSocket: WebSocket, message: ChallengeResponseMessage): Promise<void> {
+        try {
+            // 获取质询会话
+            const session = this.challengeSessions.get(webSocket);
+            if (!session) {
+                this.sendError(webSocket, '未找到质询会话，请重新注册');
+                webSocket.close();
+                return;
+            }
+
+            // 检查质询是否过期（30秒）
+            const CHALLENGE_TIMEOUT = 30000;
+            if (Date.now() - session.timestamp > CHALLENGE_TIMEOUT) {
+                this.challengeSessions.delete(webSocket);
+                this.sendError(webSocket, '质询已过期，请重新注册');
+                webSocket.close();
+                return;
+            }
+
+            // 验证质询响应
+            if (message.response !== session.challenge) {
+                this.challengeSessions.delete(webSocket);
+                this.sendError(webSocket, '质询验证失败，密钥不匹配');
+                webSocket.close();
+                return;
+            }
+
+            // 验证成功，清理质询会话
+            this.challengeSessions.delete(webSocket);
+
+            // 从公钥中提取用户信息
+            const userProfile = await this.extractUserProfile(session.publicKey);
+
             // 初始化房间配置（如果是第一个用户）
             const isFirstUser = this.users.size === 0;
             if (isFirstUser && !this.roomConfig) {
                 this.roomConfig = {
                     type: RoomType.PUBLIC,
                     creatorId: userProfile.id,
-                    enableMessageCount: true,  // 默认启用消息计数
+                    enableMessageCount: true,
                     messageCountVisibleToUser: true,
                     messageCountVisibleToGuest: true,
                     messageCount: 0
@@ -197,7 +278,7 @@ export class ChatRoom {
             const assignedRole = await this.assignUserRole(
                 isFirstUser,
                 this.roomConfig!,
-                message.inviteId,
+                session.inviteId,
                 userProfile.id
             );
 
@@ -205,7 +286,7 @@ export class ChatRoom {
                 id: userProfile.id,
                 name: userProfile.name,
                 email: userProfile.email,
-                publicKey: message.publicKey,
+                publicKey: session.publicKey,
                 webSocket: webSocket,
                 role: assignedRole
             };
@@ -254,7 +335,7 @@ export class ChatRoom {
                 roomInfo.messageCount = this.roomConfig!.messageCount || 0;
             }
 
-            // 添加消息计数配置 (所有用户都需要这些配置来判断是否显示编号)
+            // 添加消息计数配置
             roomInfo.enableMessageCount = this.roomConfig!.enableMessageCount;
             roomInfo.messageCountVisibleToUser = this.roomConfig!.messageCountVisibleToUser;
             roomInfo.messageCountVisibleToGuest = this.roomConfig!.messageCountVisibleToGuest;
@@ -293,7 +374,8 @@ export class ChatRoom {
             }
 
         } catch (error: any) {
-            this.sendError(webSocket, error.message || 'Registration failed');
+            this.challengeSessions.delete(webSocket);
+            this.sendError(webSocket, error.message || 'Authentication failed');
             webSocket.close();
         }
     }
@@ -1224,6 +1306,32 @@ export class ChatRoom {
             hash = hash & hash;
         }
         return Math.abs(hash).toString(16).padStart(8, '0');
+    }
+
+    // ========== 质询验证辅助方法 ==========
+
+    private generateChallenge(): string {
+        // 生成128字节的随机质询字符串
+        const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const length = 128;
+        let result = '';
+        const randomBytes = new Uint8Array(length);
+        crypto.getRandomValues(randomBytes);
+        for (let i = 0; i < length; i++) {
+            result += chars[randomBytes[i] % chars.length];
+        }
+        return result;
+    }
+
+    private cleanupExpiredChallenges(): void {
+        // 清理过期的质询会话（30秒超时）
+        const CHALLENGE_TIMEOUT = 30000;
+        const now = Date.now();
+        for (const [ws, session] of this.challengeSessions) {
+            if (now - session.timestamp > CHALLENGE_TIMEOUT) {
+                this.challengeSessions.delete(ws);
+            }
+        }
     }
 
     // ========== 心跳机制 ==========
