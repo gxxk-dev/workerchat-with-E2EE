@@ -94,6 +94,21 @@ export interface UserProfile {
     email: string;
 }
 
+// 回复信息
+export interface ReplyInfo {
+    senderId: string;           // 被回复消息的发送者ID
+    messageNumber?: number;     // 被回复消息的编号
+    timestamp: number;          // 被回复消息的时间戳
+}
+
+// 同步信息
+export interface SyncInfo {
+    originalSenderId: string;       // 原始发送者ID
+    originalTimestamp: number;      // 原始消息时间戳
+    originalMessageNumber?: number; // 原始消息编号（如果有）
+    syncedBy: string;               // 同步者ID
+}
+
 // ========== 客户端 -> 服务器 消息 ==========
 
 // 注册（新增 inviteId）
@@ -192,6 +207,9 @@ export interface TransferCreatorMessage {
 export interface ChatMessage {
     type: 'message';
     encryptedData: string;
+    replyTo?: ReplyInfo;        // 可选的回复信息
+    syncedFrom?: SyncInfo;       // 可选的同步信息
+    targetUserIds?: string[];    // 可选的目标用户ID列表（用于同步）
 }
 
 // ========== 服务器 -> 客户端 消息 ==========
@@ -335,6 +353,8 @@ export interface EncryptedMessage {
     encryptedData: string;
     timestamp: number;
     messageNumber?: number; // 消息编号，可选字段保持向后兼容
+    replyTo?: ReplyInfo;    // 可选的回复信息
+    syncedFrom?: SyncInfo;   // 可选的同步信息
 }
 
 // 系统提示消息

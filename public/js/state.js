@@ -38,6 +38,15 @@ let roomInfo = {
     privacy: null
 };
 
+// 回复功能相关状态
+let replyingTo = null; // 当前正在回复的消息 { senderId, messageNumber, timestamp, text }
+let messageCache = new Map(); // 缓存最近的解密消息，用于回复预览 (key: timestamp_senderId, value: { senderId, text, timestamp, messageNumber })
+const MAX_CACHE_SIZE = 100; // 最多缓存100条消息
+
+// 同步消息通知
+let syncNotificationTimers = new Map(); // 跟踪同步消息通知的定时器 (key: syncedBy userId, value: { count, timer })
+const SYNC_NOTIFICATION_DELAY = 2000; // 2秒内收到的同步消息合并显示
+
 // DOM元素
 const userListEl = document.getElementById('userList');
 const messagesEl = document.getElementById('messages');

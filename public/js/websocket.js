@@ -304,14 +304,32 @@ async function sendMessage() {
 
         debugLog(`消息加密成功，为 ${publicKeys.length} 个用户加密`);
 
-        // 发送加密消息
-        websocket.send(JSON.stringify({
+        // 构建消息对象
+        const messageData = {
             type: 'message',
             encryptedData: encrypted
-        }));
+        };
+
+        // 如果有回复信息，添加到消息中
+        if (replyingTo) {
+            messageData.replyTo = {
+                senderId: replyingTo.senderId,
+                timestamp: replyingTo.timestamp,
+                messageNumber: replyingTo.messageNumber
+            };
+            debugLog(`发送回复消息，回复给: ${replyingTo.senderId}`);
+        }
+
+        // 发送加密消息
+        websocket.send(JSON.stringify(messageData));
 
         // 清空输入框
         messageInputEl.value = '';
+
+        // 清除回复状态
+        if (replyingTo) {
+            cancelReply();
+        }
 
     } catch (error) {
         debugLog('加密失败: ' + error.message);

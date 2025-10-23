@@ -513,7 +513,6 @@ button:disabled {
         width: 80%;
         height: 100vh !important;
         height: 100dvh !important; /* 动态视口高度,适应移动浏览器栏 */
-        border-radius: 0 15px 15px 0;
         z-index: 101;
         transition: left 0.3s ease-out;
     }   
@@ -1014,3 +1013,370 @@ button:disabled {
 .message-text p:last-child {
     margin-bottom: 0;
 }
+
+/* ========================
+ * 回复功能样式
+ * ======================== */
+
+/* 回复按钮 */
+.reply-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 1em;
+    background: rgba(0, 0, 0, 0.3);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    z-index: 10;
+}
+
+.message:hover .reply-btn {
+    opacity: 1;
+}
+
+.reply-btn:hover {
+    background: rgba(74, 111, 165, 0.6);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+}
+
+.message {
+    position: relative;
+}
+
+/* 消息中的回复引用 */
+.reply-reference {
+    display: flex;
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 3px solid rgba(255, 255, 255, 0.4);
+    border-radius: 6px;
+    font-size: 0.85em;
+}
+
+.reply-icon {
+    font-size: 1.2em;
+    color: rgba(255, 255, 255, 0.6);
+    flex-shrink: 0;
+}
+
+.reply-content {
+    flex: 1;
+    overflow: hidden;
+}
+
+.reply-sender {
+    font-weight: bold;
+    color: #4ec9b0;
+    margin-bottom: 3px;
+    font-size: 0.9em;
+}
+
+.reply-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 输入区域上方的回复预览 */
+.reply-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: rgba(74, 111, 165, 0.3);
+    border-left: 3px solid var(--primary);
+    margin-bottom: 10px;
+    border-radius: 6px;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.reply-preview-content {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex: 1;
+    overflow: hidden;
+}
+
+.reply-preview-icon {
+    font-size: 1.3em;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.reply-preview-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.reply-preview-sender {
+    font-weight: bold;
+    color: #4ec9b0;
+    margin-bottom: 3px;
+    font-size: 0.85em;
+}
+
+.reply-preview-text {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.8em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.reply-preview-close {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.reply-preview-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* 移动端回复功能优化 */
+@media (max-width: 768px) {
+    .reply-btn {
+        opacity: 0;
+        width: 32px;
+        height: 32px;
+        font-size: 1.1em;
+        pointer-events: none;
+        z-index: 100;
+    }
+
+    /* 消息被点击激活时显示按钮 */
+    .message.message-active .reply-btn {
+        opacity: 1;
+        pointer-events: auto;
+        z-index: 100;
+    }
+
+    .reply-preview {
+        margin-left: 15px;
+        margin-right: 15px;
+        margin-bottom: 5px;
+    }
+
+    .reply-reference {
+        font-size: 0.8em;
+    }
+}
+/* ========================
+ * 同步功能样式
+ * ======================== */
+
+/* 同步按钮 */
+.sync-btn {
+    position: absolute;
+    top: 8px;
+    right: 44px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 1em;
+    background: rgba(0, 0, 0, 0.3);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    z-index: 10;
+}
+
+.message:hover .sync-btn {
+    opacity: 1;
+}
+
+.sync-btn:hover {
+    background: rgba(155, 89, 182, 0.6);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+}
+
+/* 同步对话框遮罩层 */
+.sync-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s;
+}
+
+/* 同步对话框 */
+.sync-dialog {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    border-radius: 15px;
+    padding: 25px;
+    max-width: 400px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 用户列表容器 */
+.sync-user-list {
+    flex: 1;
+    overflow-y: auto;
+    margin: 15px 0;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    max-height: 300px;
+}
+
+/* 用户项 */
+.sync-user-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sync-user-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.sync-user-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    cursor: pointer;
+}
+
+.sync-user-name {
+    font-weight: bold;
+    color: white;
+}
+
+/* 按钮容器 */
+.sync-dialog-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.sync-cancel-btn,
+.sync-confirm-btn {
+    flex: 1;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s;
+}
+
+.sync-cancel-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.sync-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sync-confirm-btn {
+    background: var(--primary);
+    color: white;
+}
+
+.sync-confirm-btn:hover {
+    background: var(--secondary);
+}
+
+/* 移动端同步功能优化 */
+@media (max-width: 768px) {
+    .sync-btn {
+        opacity: 0;
+        width: 32px;
+        height: 32px;
+        font-size: 1.1em;
+        right: 50px;
+        pointer-events: none;
+    }
+
+    /* 消息被点击激活时显示按钮 */
+    .message.message-active .sync-btn {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .sync-dialog {
+        width: 95%;
+        max-height: 70vh;
+        padding: 20px;
+    }
+
+    .sync-user-list {
+        max-height: 250px;
+    }
+}
+

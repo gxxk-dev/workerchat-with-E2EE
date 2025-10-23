@@ -11,7 +11,7 @@ import {
     PrivacyConfigUpdatedMessage, CreatorTransferredMessage, PermissionDeniedMessage,
     UpdateMessageCountConfigMessage, MessageCountConfigUpdatedMessage,
     SystemMessage, AuthChallengeMessage, ChallengeResponseMessage,
-    ROLE_PERMISSIONS
+    SyncInfo, ROLE_PERMISSIONS
 } from "./models";
 import { readKey } from "openpgp";
 import {encrypt, createMessage} from "openpgp";
@@ -978,22 +978,33 @@ export class ChatRoom {
         }
 
         // 广播加密消息
+        // 如果是同步消息，使用原始发送者和时间戳；否则使用当前发送者和时间
         const broadcastMessage: EncryptedMessage = {
             type: 'encryptedMessage',
-            senderId: sender.id,
+            senderId: message.syncedFrom ? message.syncedFrom.originalSenderId : sender.id,
             encryptedData: message.encryptedData,
-            timestamp: Date.now(),
-            messageNumber: undefined // 先设为undefined，下面会赋值
+            timestamp: message.syncedFrom ? message.syncedFrom.originalTimestamp : Date.now(),
+            messageNumber: undefined, // 先设为undefined，下面会赋值
+            replyTo: message.replyTo, // 传递回复信息
+            syncedFrom: message.syncedFrom // 传递同步信息
         };
 
-        // 递增消息计数（如果启用）
-        if (this.roomConfig && this.roomConfig.enableMessageCount) {
+        // 递增消息计数（如果启用且不是同步消息）
+        // 同步消息（带有syncedFrom字段）不计入消息计数
+        if (this.roomConfig && this.roomConfig.enableMessageCount && !message.syncedFrom) {
             this.roomConfig.messageCount = (this.roomConfig.messageCount || 0) + 1;
             broadcastMessage.messageNumber = this.roomConfig.messageCount;
             await this.saveRoomConfig();
         }
 
-        this.broadcast(broadcastMessage);
+        // 如果指定了目标用户(同步消息),只发送给这些用户和发送者自己
+        if (message.targetUserIds && message.targetUserIds.length > 0) {
+            const targetIds = new Set([...message.targetUserIds, sender.id]); // 包含发送者自己
+            this.broadcastToUsers(broadcastMessage, targetIds);
+        } else {
+            // 正常广播给所有人
+            this.broadcast(broadcastMessage);
+        }
     }
 
     private async handleDisconnect(webSocket: WebSocket): Promise<void> {
@@ -1049,6 +1060,31 @@ export class ChatRoom {
     private broadcast(message: any): void {
         const messageStr = JSON.stringify(message);
         for (const [ws, user] of this.users) {
+            // 检查用户是否有权限接收此消息
+            if (message.type === 'encryptedMessage') {
+                if (!this.hasPermission(user, Permission.VIEW_MESSAGES)) {
+                    continue;
+                }
+            }
+
+            try {
+                ws.send(messageStr);
+            } catch (error) {
+                // 连接已关闭，清理
+                this.sessions.delete(ws);
+                this.users.delete(ws);
+            }
+        }
+    }
+
+    private broadcastToUsers(message: any, targetUserIds: Set<string>): void {
+        const messageStr = JSON.stringify(message);
+        for (const [ws, user] of this.users) {
+            // 只发送给目标用户
+            if (!targetUserIds.has(user.id)) {
+                continue;
+            }
+
             // 检查用户是否有权限接收此消息
             if (message.type === 'encryptedMessage') {
                 if (!this.hasPermission(user, Permission.VIEW_MESSAGES)) {

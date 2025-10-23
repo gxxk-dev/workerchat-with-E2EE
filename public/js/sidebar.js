@@ -10,7 +10,7 @@ function setupSidebarToggle() {
 
     // 展开侧边栏
     function expandSidebar() {
-        if (isMobile) return;
+        if (!window.isMobile) return;
         manageArea.classList.add('expanded');
         overlay.style.display = 'block';
         if (slideToggle) {
@@ -20,7 +20,7 @@ function setupSidebarToggle() {
 
     // 收起侧边栏
     function collapseSidebar() {
-        if (isMobile) return;
+        if (!window.isMobile) return;
         manageArea.classList.remove('expanded');
         overlay.style.display = 'none';
         if (slideToggle) {
@@ -36,7 +36,7 @@ function setupSidebarToggle() {
 
     // 响应窗口大小变化
     window.addEventListener('resize', () => {
-        if (isMobile) {
+        if (window.isMobile) {
             // 在非移动端时确保面板处于正常状态
             collapseSidebar();
         }
