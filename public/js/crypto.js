@@ -61,7 +61,20 @@ async function importKey(type) {
 
             try {
                 debugLog(`开始导入${type}密钥文件: ${file.name}`);
-                let text = await file.text();
+
+                // 兼容性处理：file.text() 在某些旧浏览器中不支持
+                let text;
+                if (file.text) {
+                    text = await file.text();
+                } else {
+                    // 降级方案：使用 FileReader
+                    text = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = () => reject(new Error('文件读取失败'));
+                        reader.readAsText(file);
+                    });
+                }
 
                 if (type === 'public') {
                     const pubKey = await openpgp.readKey({ armoredKey: text });
@@ -151,6 +164,18 @@ async function generateNewKeys() {
     };
     try {
         debugLog('开始生成新密钥对...');
+
+        // 使用自定义对话框获取用户信息
+        const userName = await customPrompt('请输入您的名字', '', `User${generate6DigitNumber()}`);
+
+        // 如果用户取消输入名字，停止生成
+        if (userName === null) {
+            debugLog('用户取消了密钥生成');
+            return;
+        }
+
+        const userEmail = await customPrompt('请输入您的邮箱 (可选)', '例如: user@example.com', '');
+
         showNotification('正在生成密钥，请稍候...', 'warning');
 
         // 生成密钥对
@@ -158,8 +183,8 @@ async function generateNewKeys() {
             type: 'ecc',
             curve: 'curve25519',
             userIDs: [{
-                name: prompt('请输入您的名字') || `User${generate6DigitNumber()}`, // 这里如果留空的话openpgp会自动生成一对 似乎不是未定义行为（？
-                email: prompt('请输入您的邮箱')
+                name: userName || `User${generate6DigitNumber()}`,
+                email: userEmail || undefined
             }],
             passphrase: ''
         });

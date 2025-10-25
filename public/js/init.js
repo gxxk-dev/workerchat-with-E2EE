@@ -5,6 +5,13 @@
 document.addEventListener('DOMContentLoaded', async function() {
     debugLog('应用初始化...');
 
+    // 检查浏览器兼容性
+    const isCompatible = checkBrowserSupport();
+    if (!isCompatible) {
+        debugLog('浏览器不兼容，应用可能无法正常运行');
+        // 虽然不兼容，但仍然尝试继续运行
+    }
+
     // 设置Tab切换
     setupTabSwitching();
 

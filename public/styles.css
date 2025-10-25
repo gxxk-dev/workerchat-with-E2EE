@@ -38,12 +38,20 @@ body {
 .panel {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* Safari 兼容性 */
     border-radius: 15px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.18);
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+
+/* backdrop-filter 降级方案 */
+@supports not (backdrop-filter: blur(10px)) {
+    .panel {
+        background: rgba(255, 255, 255, 0.25); /* 提高不透明度作为降级 */
+    }
 }
 
 .header {
@@ -601,6 +609,7 @@ button:disabled {
  * 自定义滚动条样式 (仅桌面端)
  * ======================== */
 @media (min-width: 769px) {
+    /* WebKit 浏览器 (Chrome, Safari, Edge) */
     ::-webkit-scrollbar {
         width: 6px;
     }
@@ -616,6 +625,12 @@ button:disabled {
 
     ::-webkit-scrollbar-thumb:hover {
         background: rgba(128, 128, 128, 0.7);
+    }
+
+    /* Firefox 标准滚动条样式 */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
     }
 }
 
@@ -1378,5 +1393,104 @@ button:disabled {
     .sync-user-list {
         max-height: 250px;
     }
+}
+
+/* ========================
+ * 自定义输入对话框样式 (替代 prompt)
+ * ======================== */
+
+.custom-prompt-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    animation: fadeIn 0.2s;
+}
+
+.custom-prompt-dialog {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 15px;
+    padding: 25px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: slideUp 0.3s ease-out;
+}
+
+/* 不支持 backdrop-filter 的降级 */
+@supports not (backdrop-filter: blur(20px)) {
+    .custom-prompt-dialog {
+        background: rgba(40, 44, 52, 0.95);
+    }
+}
+
+.custom-prompt-title {
+    color: white;
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.custom-prompt-input {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.95em;
+    margin-bottom: 20px;
+}
+
+.custom-prompt-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.custom-prompt-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.custom-prompt-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.custom-prompt-btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s;
+}
+
+.custom-prompt-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.custom-prompt-cancel:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.custom-prompt-confirm {
+    background: var(--primary);
+    color: white;
+}
+
+.custom-prompt-confirm:hover {
+    background: var(--secondary);
 }
 
