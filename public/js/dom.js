@@ -1,0 +1,17 @@
+const DOM = {
+    get userList()        { return document.getElementById('userList'); },
+    get messages()        { return document.getElementById('messages'); },
+    get messageInput()    { return document.getElementById('messageInput'); },
+    get sendButton()      { return document.getElementById('sendButton'); },
+    get generateKeys()    { return document.getElementById('generateKeys'); },
+    get importPublicKey() { return document.getElementById('importPublicKey'); },
+    get importPrivateKey(){ return document.getElementById('importPrivateKey'); },
+    get copyPublicKey()   { return document.getElementById('copyPublicKey'); },
+    get keyId()           { return document.getElementById('keyId'); },
+    get notification()    { return document.getElementById('notification'); },
+    get debugInfo()       { return document.getElementById('debugInfo'); },
+    get connectionStatus(){ return document.getElementById('connectionStatus'); },
+    get roomUrl()         { return document.getElementById('roomUrl'); },
+    get manageArea()      { return document.querySelector('.manage-area'); },
+    get overlay()         { return document.getElementById('overlay'); },
+};

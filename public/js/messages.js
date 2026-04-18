@@ -134,8 +134,8 @@ function displayEncryptedMessage(message, reason) {
     messageEl.appendChild(senderInfoEl);
     messageEl.appendChild(messageTextEl);
 
-    messagesEl.appendChild(messageEl);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    DOM.messages.appendChild(messageEl);
+    DOM.messages.scrollTop = DOM.messages.scrollHeight;
 }
 
 // 显示消息
@@ -144,7 +144,7 @@ function displayMessage({ senderId, text, timestamp, isSelf, messageNumber, repl
     const displayTimestamp = syncedFrom ? syncedFrom.originalTimestamp : timestamp;
 
     // 检查消息是否已存在（去重）
-    const existingMessages = messagesEl.querySelectorAll('.message');
+    const existingMessages = DOM.messages.querySelectorAll('.message');
     for (const existingMsg of existingMessages) {
         const existingTimestamp = existingMsg.getAttribute('data-timestamp');
         const existingSenderId = existingMsg.getAttribute('data-sender-id');
@@ -318,12 +318,12 @@ function displayMessage({ senderId, text, timestamp, isSelf, messageNumber, repl
     if (isReceivedSyncMessage) {
         // 接收到的同步消息：按原始时间戳插入到正确位置
         let inserted = false;
-        const existingMessages = messagesEl.querySelectorAll('.message');
+        const existingMessages = DOM.messages.querySelectorAll('.message');
 
         for (const existingMsg of existingMessages) {
             const existingTimestamp = parseInt(existingMsg.getAttribute('data-timestamp'));
             if (displayTimestamp < existingTimestamp) {
-                messagesEl.insertBefore(messageEl, existingMsg);
+                DOM.messages.insertBefore(messageEl, existingMsg);
                 inserted = true;
                 break;
             }
@@ -331,14 +331,14 @@ function displayMessage({ senderId, text, timestamp, isSelf, messageNumber, repl
 
         // 如果没有插入（时间戳最新），追加到末尾
         if (!inserted) {
-            messagesEl.appendChild(messageEl);
+            DOM.messages.appendChild(messageEl);
         }
 
         // 同步消息不自动滚动到底部，保持当前滚动位置
     } else {
         // 普通消息或自己同步的消息：直接追加到末尾
-        messagesEl.appendChild(messageEl);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+        DOM.messages.appendChild(messageEl);
+        DOM.messages.scrollTop = DOM.messages.scrollHeight;
     }
 
     // 移动端点击消息显示操作按钮
@@ -350,7 +350,7 @@ function displayMessage({ senderId, text, timestamp, isSelf, messageNumber, repl
             }
 
             // 移除其他消息的激活状态
-            const allMessages = messagesEl.querySelectorAll('.message');
+            const allMessages = DOM.messages.querySelectorAll('.message');
             allMessages.forEach(msg => {
                 if (msg !== messageEl) {
                     msg.classList.remove('message-active');
@@ -372,8 +372,8 @@ function handleSystemMessage(data) {
     systemMessageEl.className = `system-message ${data.messageType.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
     systemMessageEl.textContent = data.content;
 
-    messagesEl.appendChild(systemMessageEl);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    DOM.messages.appendChild(systemMessageEl);
+    DOM.messages.scrollTop = DOM.messages.scrollHeight;
 }
 
 // ========================
@@ -384,7 +384,7 @@ function handleSystemMessage(data) {
 function setReplyTo(messageInfo) {
     replyingTo = messageInfo;
     updateReplyPreview();
-    messageInputEl.focus();
+    DOM.messageInput.focus();
 }
 
 // 取消回复

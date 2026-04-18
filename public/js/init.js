@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 更新标题
     document.title = `E2EE Chat #${roomId}`;
 
-    roomUrlEl.innerHTML = `
+    DOM.roomUrl.innerHTML = `
         <span id="copyRoomLink">${window.location.href} <span style="margin-left: 10px; padding: 4px 8px; background: var(--primary); border: none; border-radius: 4px; color: white; cursor: pointer;">复制链接</span></span>
     `;
 
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     setTimeout(() => showNewbieGuide(), 500); // 延迟500ms确保界面完全渲染
 
     // 输入区域自动高度调整
-    messageInputEl.addEventListener('input', function() {
+    DOM.messageInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
     });

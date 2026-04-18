@@ -72,25 +72,25 @@ async function fetchRoomId() {
 function debugLog(message) {
     console.log(message);
     const timestamp = new Date().toLocaleTimeString();
-    debugInfoEl.textContent += `${timestamp}: ${message}\n`;
-    debugInfoEl.scrollTop = debugInfoEl.scrollHeight;
+    DOM.debugInfo.textContent += `${timestamp}: ${message}\n`;
+    DOM.debugInfo.scrollTop = DOM.debugInfo.scrollHeight;
 }
 
 // 显示通知
 function showNotification(message, type = 'success') {
-    notificationEl.textContent = message;
-    notificationEl.className = 'notification';
+    DOM.notification.textContent = message;
+    DOM.notification.className = 'notification';
 
     if (type === 'error') {
-        notificationEl.classList.add('error');
+        DOM.notification.classList.add('error');
     } else if (type === 'warning') {
-        notificationEl.classList.add('warning');
+        DOM.notification.classList.add('warning');
     }
 
-    notificationEl.classList.add('show');
+    DOM.notification.classList.add('show');
 
     setTimeout(() => {
-        notificationEl.classList.remove('show');
+        DOM.notification.classList.remove('show');
     }, 3000);
 }
 

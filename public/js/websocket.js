@@ -119,9 +119,9 @@ async function handleWebSocketMessage(data) {
 
             // 显示密钥指纹(如果已初始化)或服务器ID
             if (userFingerprint) {
-                keyIdEl.textContent = userFingerprint;
+                DOM.keyId.textContent = userFingerprint;
             } else {
-                keyIdEl.textContent = userId;
+                DOM.keyId.textContent = userId;
             }
 
             if (data.assignedRole) {
@@ -221,7 +221,7 @@ function handleConnectedUI() {
     reconnectAttempts = 0;
 
     // 清空用户列表并显示加载提示
-    userListEl.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">正在加载用户列表...</div>';
+    DOM.userList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">正在加载用户列表...</div>';
 
     // 启用UI
     enableUI();
@@ -242,7 +242,7 @@ function handleDisconnectedUI() {
     stopHeartbeat();
 
     // 更新用户列表显示为断开连接状态
-    userListEl.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">等待连接...</div>';
+    DOM.userList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">等待连接...</div>';
 
     // 在聊天窗口显示断开连接提示
     handleSystemMessage({
@@ -255,7 +255,7 @@ function handleDisconnectedUI() {
 
 // 发送消息
 async function sendMessage() {
-    const messageText = messageInputEl.value.trim();
+    const messageText = DOM.messageInput.value.trim();
     if (!messageText) return;
 
     if (!publicKey) {
@@ -324,7 +324,7 @@ async function sendMessage() {
         websocket.send(JSON.stringify(messageData));
 
         // 清空输入框
-        messageInputEl.value = '';
+        DOM.messageInput.value = '';
 
         // 清除回复状态
         if (replyingTo) {

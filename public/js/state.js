@@ -47,19 +47,3 @@ const MAX_CACHE_SIZE = 100; // 最多缓存100条消息
 let syncNotificationTimers = new Map(); // 跟踪同步消息通知的定时器 (key: syncedBy userId, value: { count, timer })
 const SYNC_NOTIFICATION_DELAY = 2000; // 2秒内收到的同步消息合并显示
 
-// DOM元素
-const userListEl = document.getElementById('userList');
-const messagesEl = document.getElementById('messages');
-const messageInputEl = document.getElementById('messageInput');
-const sendButtonEl = document.getElementById('sendButton');
-const generateKeysBtn = document.getElementById('generateKeys');
-const importPublicKeyBtn = document.getElementById('importPublicKey');
-const importPrivateKeyBtn = document.getElementById('importPrivateKey');
-const copyPublicKeyBtn = document.getElementById('copyPublicKey');
-const keyIdEl = document.getElementById('keyId');
-const notificationEl = document.getElementById('notification');
-const debugInfoEl = document.getElementById('debugInfo');
-const connectionStatusEl = document.getElementById('connectionStatus');
-const roomUrlEl = document.getElementById('roomUrl');
-const manageArea = document.querySelector('.manage-area');
-const overlayEl = document.getElementById('overlay');

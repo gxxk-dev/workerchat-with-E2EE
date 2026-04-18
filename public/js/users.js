@@ -2,15 +2,22 @@
 // 用户列表管理
 // ========================
 
-// 更新用户列表
 function updateUserList(userList) {
-    userListEl.innerHTML = '';
     users.clear();
-
+    userList.forEach(u => users.set(u.id, u));
     debugLog(`更新用户列表，共 ${userList.length} 个用户`);
+    renderUserList(userList);
+}
+
+function renderUserList(userList) {
+    DOM.userList.innerHTML = '';
+
+    if (userList.length === 0) {
+        DOM.userList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无用户</div>';
+        return;
+    }
 
     userList.forEach(user => {
-        users.set(user.id, user);
 
         const userEl = document.createElement('div');
         userEl.className = 'user-item';
@@ -119,10 +126,10 @@ function updateUserList(userList) {
             }
         }
 
-        userListEl.appendChild(userEl);
+        DOM.userList.appendChild(userEl);
     });
 
     if (userList.length === 0) {
-        userListEl.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无用户</div>';
+        DOM.userList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无用户</div>';
     }
 }

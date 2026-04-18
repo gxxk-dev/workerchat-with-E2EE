@@ -3,19 +3,19 @@
 // ========================
 
 function updateConnectionStatus(status) {
-    connectionStatusEl.className = `connection-status status-${status}`;
+    DOM.connectionStatus.className = `connection-status status-${status}`;
     switch (status) {
         case 'connected':
-            connectionStatusEl.textContent = '已连接';
+            DOM.connectionStatus.textContent = '已连接';
             break;
         case 'no-key':
-            connectionStatusEl.textContent = '已连接';
+            DOM.connectionStatus.textContent = '已连接';
             break;
         case 'connecting':
-            connectionStatusEl.textContent = '连接中...';
+            DOM.connectionStatus.textContent = '连接中...';
             break;
         case 'disconnected':
-            connectionStatusEl.textContent = '未连接';
+            DOM.connectionStatus.textContent = '未连接';
             break;
     }
 }
@@ -47,20 +47,20 @@ function enableUI() {
     if (publicKey) {
         // 检查是否有发送消息的权限（Guest没有）
         const canSendMessages = roomInfo.yourRole !== 'guest';
-        messageInputEl.disabled = !canSendMessages;
-        sendButtonEl.disabled = !canSendMessages;
+        DOM.messageInput.disabled = !canSendMessages;
+        DOM.sendButton.disabled = !canSendMessages;
 
         if (!canSendMessages) {
-            messageInputEl.placeholder = 'Guest无法发送消息';
+            DOM.messageInput.placeholder = 'Guest无法发送消息';
         } else {
-            messageInputEl.placeholder = '输入消息...';
+            DOM.messageInput.placeholder = '输入消息...';
         }
     }
 }
 
 function disableUI() {
-    messageInputEl.disabled = true;
-    sendButtonEl.disabled = true;
+    DOM.messageInput.disabled = true;
+    DOM.sendButton.disabled = true;
 }
 
 // 更新UI基于角色
@@ -142,30 +142,34 @@ function updateUIBasedOnRole() {
     // 根据权限启用/禁用消息发送
     const canSendMessages = roomInfo.yourRole !== 'guest';
     if (publicKey && websocket && websocket.readyState === WebSocket.OPEN) {
-        messageInputEl.disabled = !canSendMessages;
-        sendButtonEl.disabled = !canSendMessages;
+        DOM.messageInput.disabled = !canSendMessages;
+        DOM.sendButton.disabled = !canSendMessages;
 
         if (!canSendMessages) {
-            messageInputEl.placeholder = 'Guest无法发送消息';
+            DOM.messageInput.placeholder = 'Guest无法发送消息';
         } else {
-            messageInputEl.placeholder = '输入消息...';
+            DOM.messageInput.placeholder = '输入消息...';
         }
     }
 }
 
 // 事件监听器设置
 function setupEventListeners() {
-    sendButtonEl.addEventListener('click', sendMessage);
-    messageInputEl.addEventListener('keydown', (e) => {
+    DOM.sendButton.addEventListener('click', sendMessage);
+    DOM.messageInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             if (!window.isMobile) e.preventDefault();
             sendMessage();
         }
     });
-    connectionStatusEl.addEventListener('click', handleConnectionStatusClick);
+    DOM.connectionStatus.addEventListener('click', handleConnectionStatusClick);
 
-    generateKeysBtn.addEventListener('click', generateNewKeys);
-    importPublicKeyBtn.addEventListener('click', () => importKey('public'));
-    importPrivateKeyBtn.addEventListener('click', () => importKey('private'));
-    copyPublicKeyBtn.addEventListener('click', copyPublicKey);
+    DOM.generateKeys.addEventListener('click', generateNewKeys);
+    DOM.importPublicKey.addEventListener('click', () => importKey('public'));
+    DOM.importPrivateKey.addEventListener('click', () => importKey('private'));
+    DOM.copyPublicKey.addEventListener('click', copyPublicKey);
+
+    document.getElementById('generateInviteLinkBtn')?.addEventListener('click', generateInviteLink);
+    document.getElementById('updatePrivacyConfigBtn')?.addEventListener('click', updatePrivacyConfig);
+    document.getElementById('updateMessageCountConfigBtn')?.addEventListener('click', updateMessageCountConfig);
 }

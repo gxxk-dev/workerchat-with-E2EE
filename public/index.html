@@ -72,7 +72,7 @@
                         </select>
                         <input type="number" id="inviteExpires" class="admin-input" placeholder="过期时间(小时)" min="1">
                         <input type="number" id="inviteMaxUsage" class="admin-input" placeholder="最大使用次数" min="1">
-                        <button onclick="generateInviteLink()" class="admin-btn">生成邀请链接</button>
+                        <button id="generateInviteLinkBtn" class="admin-btn">生成邀请链接</button>
                     </div>
                     <div id="inviteList" class="invite-list"></div>
                 </div>
@@ -99,7 +99,7 @@
                             <input type="checkbox" id="requireInviteToJoin">
                             <span>需要邀请链接才能加入</span>
                         </label>
-                        <button onclick="updatePrivacyConfig()" class="admin-btn">保存设置</button>
+                        <button id="updatePrivacyConfigBtn" class="admin-btn">保存设置</button>
                     </div>
                 </div>
 
@@ -119,7 +119,7 @@
                             <input type="checkbox" id="messageCountVisibleToGuest">
                             <span>Guest 可见消息计数</span>
                         </label>
-                        <button onclick="updateMessageCountConfig()" class="admin-btn">保存设置</button>
+                        <button id="updateMessageCountConfigBtn" class="admin-btn">保存设置</button>
                     </div>
                 </div>
                     </div>
@@ -146,15 +146,16 @@
 
     <!-- JavaScript 模块 -->
     <script src="js/markdown-config.js"></script>
+    <script src="js/dom.js"></script>
     <script src="js/state.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/crypto.js"></script>
     <script src="js/heartbeat.js"></script>
     <script src="js/websocket.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/messages.js"></script>
     <script src="js/users.js"></script>
     <script src="js/admin.js"></script>
-    <script src="js/ui.js"></script>
     <script src="js/tabs.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/init.js"></script>
