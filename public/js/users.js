@@ -17,48 +17,18 @@ function renderUserList(userList) {
         return;
     }
 
+    const collisions = getShortIdCollisions(users);
+
     userList.forEach(user => {
+        const color = getUserColor(user.id);
+        const isSelf = user.id === userId;
+        const idDisplay = collisions.has(user.id) ? user.id.slice(-16) : user.id.slice(-8);
+        const hasCollision = collisions.has(user.id);
 
         const userEl = document.createElement('div');
-        userEl.className = 'user-item';
-        if (user.id === userId) {
-            userEl.classList.add('self');
-        }
+        userEl.className = 'user-item' + (isSelf ? ' self' : '');
 
-        const idDisplay = user.id.slice(-16);
-
-        // 用户信息容器
-        const userInfoEl = document.createElement('div');
-        userInfoEl.className = 'user-info-container';
-
-        // 使用DOM API创建元素而不是innerHTML
-        const nameEl = document.createElement('div');
-        nameEl.className = 'user-name';
-        nameEl.textContent = user.name + (user.id === userId ? ' (你)' : '');
-
-        // 添加角色徽章 - 仅在Private房间下显示
-        if (user.role && roomInfo.roomType === 'private') {
-            const roleEl = document.createElement('span');
-            roleEl.className = `role-badge role-${user.role}`;
-            roleEl.textContent = getRoleLabel(user.role);
-            nameEl.appendChild(roleEl);
-        }
-
-        const idEl = document.createElement('div');
-        idEl.className = 'user-id';
-        idEl.textContent = idDisplay;
-
-        userInfoEl.appendChild(nameEl);
-        userInfoEl.appendChild(idEl);
-
-        if (user.email) {
-            const emailEl = document.createElement('div');
-            emailEl.className = 'user-email';
-            emailEl.textContent = user.email;
-            userInfoEl.appendChild(emailEl);
-        }
-
-        userEl.appendChild(userInfoEl);
+        userEl.appendChild(buildUserCard(user, color, isSelf, idDisplay, hasCollision));
 
         // 添加操作按钮（如果有权限且不是自己）
         if (user.id !== userId && roomInfo.roomType === 'private') {
@@ -79,9 +49,10 @@ function renderUserList(userList) {
                 const banBtn = document.createElement('button');
                 banBtn.className = 'action-btn ban-btn';
                 banBtn.textContent = '封禁';
-                banBtn.onclick = () => {
-                    const banType = confirm('封禁密钥指纹？\n点击"确定"封禁密钥指纹，点击"取消"封禁IP') ? 'keyFingerprint' : 'ip';
-                    banUser(user.id, banType);
+                banBtn.onclick = async () => {
+                    const isFingerprint = await customChoice('选择封禁方式', '封禁IP', '封禁密钥指纹');
+                    if (isFingerprint === null) return;
+                    banUser(user.id, isFingerprint ? 'keyFingerprint' : 'ip');
                 };
                 actionsEl.appendChild(banBtn);
             }
@@ -132,4 +103,56 @@ function renderUserList(userList) {
     if (userList.length === 0) {
         DOM.userList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无用户</div>';
     }
+}
+
+// ── 共用：构建徽章行 ──
+function buildBadges(user, isSelf) {
+    const frag = document.createDocumentFragment();
+    if (isSelf) {
+        const b = document.createElement('span');
+        b.className = 'self-badge';
+        b.textContent = '你';
+        frag.appendChild(b);
+    }
+    if (user.role && roomInfo.roomType === 'private') {
+        const r = document.createElement('span');
+        r.className = `role-badge role-${user.role}`;
+        r.textContent = getRoleLabel(user.role);
+        frag.appendChild(r);
+    }
+    return frag;
+}
+
+// ── 方案 C：名字前色点 ──
+function buildUserCard(user, color, isSelf, idDisplay, hasCollision) {
+    const wrap = document.createElement('div');
+    wrap.className = 'user-variant-c';
+
+    const info = document.createElement('div');
+    info.className = 'user-info-container';
+
+    const nameRow = document.createElement('div');
+    nameRow.className = 'user-name';
+    const dot = document.createElement('span');
+    dot.className = 'user-dot';
+    dot.style.background = color;
+    nameRow.appendChild(dot);
+    nameRow.appendChild(document.createTextNode(user.name));
+    nameRow.appendChild(buildBadges(user, isSelf));
+    info.appendChild(nameRow);
+
+    const idRow = document.createElement('div');
+    idRow.className = 'user-id' + (hasCollision ? ' collision' : '');
+    idRow.textContent = idDisplay.toUpperCase().replace(/(.{4})/g, '$1 ').trim();
+    info.appendChild(idRow);
+
+    if (user.email) {
+        const em = document.createElement('div');
+        em.className = 'user-email';
+        em.textContent = user.email;
+        info.appendChild(em);
+    }
+
+    wrap.appendChild(info);
+    return wrap;
 }

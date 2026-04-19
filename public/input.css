@@ -1,0 +1,738 @@
+@import "tailwindcss";
+@source inline("role-badge role-creator role-admin role-user role-guest self-badge sync-badge");
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html { font-optical-sizing: auto; }
+  body { font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01", "ss03"; }
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.15) transparent;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.15); border-radius: 2px; }
+}
+
+/* ── Message bubbles ── */
+@utility message {
+  padding: --spacing(2.5) --spacing(3);
+  border-radius: --radius(xl);
+  max-width: 70%;
+  word-wrap: break-word;
+  font-size: var(--text-sm);
+  line-height: var(--leading-5);
+  &:hover .reply-btn, &:hover .sync-btn { opacity: 1; }
+}
+
+@utility sent {
+  background: rgb(63 63 70);
+  align-self: flex-end;
+  margin-left: 15%;
+}
+
+@utility received {
+  background: rgb(39 39 42);
+  align-self: flex-start;
+  margin-right: 15%;
+}
+
+@utility encrypted {
+  background: rgb(239 68 68 / 0.15) !important;
+  border: 1px solid rgb(239 68 68 / 0.3);
+}
+
+@utility synced-message {
+  opacity: 0.85;
+}
+
+@utility message-active {
+  outline: 2px solid rgb(161 161 170 / 0.4);
+}
+
+@utility sender-info {
+  display: flex;
+  flex-direction: column;
+  gap: --spacing(0.5);
+  margin-bottom: --spacing(1);
+  font-size: var(--text-xs);
+}
+
+@utility sender-name {
+  font-weight: 600;
+  color: rgb(110 231 183);
+  font-size: var(--text-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: --spacing(1.5);
+}
+
+@utility sender-id {
+  font-size: 0.65rem;
+  color: rgb(161 161 170);
+  font-family: var(--font-mono);
+}
+
+@utility message-time {
+  font-size: 0.65rem;
+  opacity: 0.6;
+}
+
+@utility message-number {
+  font-size: 0.65rem;
+  opacity: 0.5;
+  margin-left: --spacing(1.5);
+  font-variant-numeric: tabular-nums;
+}
+
+@utility message-text {
+  line-height: 1.5;
+  & p { margin-bottom: --spacing(1); }
+  & p:last-child { margin-bottom: 0; }
+  & pre { border-radius: --radius(lg); overflow-x: auto; margin: --spacing(1.5) 0; }
+  & code { font-size: var(--text-xs); }
+  & a { color: rgb(147 197 253); text-decoration: underline; }
+}
+
+@utility system-message {
+  padding: --spacing(1.5) --spacing(4);
+  margin: --spacing(1) auto;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.06);
+  color: rgb(161 161 170);
+  font-size: var(--text-xs);
+  text-align: center;
+  font-style: italic;
+  max-width: 80%;
+  border: 1px solid rgb(255 255 255 / 0.08);
+}
+
+@utility user-joined {
+  background: rgb(34 197 94 / 0.12) !important;
+  border-color: rgb(34 197 94 / 0.2) !important;
+  color: rgb(74 222 128) !important;
+}
+
+@utility user-reconnected {
+  background: rgb(59 130 246 / 0.12) !important;
+  border-color: rgb(59 130 246 / 0.2) !important;
+  color: rgb(96 165 250) !important;
+}
+
+@utility reply-preview {
+  display: flex;
+  align-items: center;
+  gap: --spacing(2);
+  padding: --spacing(1.5) --spacing(2);
+  background: transparent;
+  border-left: 2px solid rgb(110 231 183 / 0.5);
+  border-radius: 0 --radius(md) --radius(md) 0;
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+@utility reply-preview-content {
+  display: flex;
+  align-items: center;
+  gap: --spacing(2);
+  flex: 1;
+  min-width: 0;
+}
+
+@utility reply-preview-icon {
+  color: rgb(161 161 170);
+  font-size: var(--text-sm);
+  shrink: 0;
+}
+
+@utility reply-preview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+@utility reply-preview-sender {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: rgb(110 231 183);
+}
+
+@utility reply-preview-text {
+  font-size: var(--text-xs);
+  color: rgb(113 113 122);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@utility reply-preview-close {
+  padding: --spacing(1);
+  background: transparent;
+  border: none;
+  color: rgb(113 113 122);
+  cursor: pointer;
+  border-radius: --radius(md);
+  font-size: var(--text-sm);
+  shrink: 0;
+  &:hover { color: rgb(228 228 231); background: rgb(63 63 70); }
+}
+
+/* ── Reply reference in message ── */
+@utility reply-reference {
+  display: flex;
+  align-items: flex-start;
+  gap: --spacing(1.5);
+  padding: --spacing(1.5) --spacing(2);
+  margin-bottom: --spacing(1.5);
+  border-left: 2px solid rgb(161 161 170 / 0.4);
+  background: rgb(255 255 255 / 0.05);
+  border-radius: 0 --radius(md) --radius(md) 0;
+}
+
+@utility reply-icon {
+  color: rgb(113 113 122);
+  font-size: var(--text-xs);
+  shrink: 0;
+  margin-top: 1px;
+}
+
+@utility reply-content { flex: 1; min-width: 0; }
+
+@utility reply-sender {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: rgb(110 231 183);
+  margin-bottom: --spacing(0.5);
+}
+
+@utility reply-text {
+  font-size: var(--text-xs);
+  color: rgb(113 113 122);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@utility reply-btn {
+  margin-top: --spacing(1.5);
+  padding: --spacing(1);
+  font-size: 0.65rem;
+  background: transparent;
+  border: none;
+  border-radius: --radius(md);
+  color: rgb(113 113 122);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  &:hover { color: rgb(161 161 170); background: rgb(255 255 255 / 0.06); }
+}
+
+@utility sync-btn {
+  margin-top: --spacing(1.5);
+  margin-left: --spacing(0.5);
+  padding: --spacing(1);
+  font-size: 0.65rem;
+  background: transparent;
+  border: none;
+  border-radius: --radius(md);
+  color: rgb(113 113 122);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  &:hover { color: rgb(147 197 253); background: rgb(59 130 246 / 0.25); }
+}
+
+@utility sync-badge {
+  display: inline-block;
+  padding: 0 --spacing(1.5);
+  font-size: 0.6rem;
+  background: rgb(59 130 246 / 0.2);
+  color: rgb(147 197 253);
+  border-radius: 9999px;
+  margin-left: --spacing(1);
+}
+
+@utility batch-select-cb {
+  appearance: none;
+  position: absolute;
+  left: --spacing(-8);
+  top: 50%;
+  translate: 0 -50%;
+  width: --spacing(4);
+  height: --spacing(4);
+  border: 1px solid rgb(113 113 122);
+  border-radius: --radius(sm);
+  background: transparent;
+  cursor: pointer;
+  &:checked {
+    background: rgb(59 130 246);
+    border-color: rgb(59 130 246);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 8L6 11L11 3.5' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-size: 80%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+}
+
+@utility batch-selected {
+  background: rgb(59 130 246 / 0.08) !important;
+  outline: 1px solid rgb(59 130 246 / 0.3);
+  outline-offset: -1px;
+}
+
+/* ── User list ── */
+@utility user-item {
+  padding: --spacing(2.5) --spacing(3);
+  margin-bottom: --spacing(1.5);
+  background: rgb(255 255 255 / 0.05);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: --radius(lg);
+  cursor: pointer;
+  &:hover { background: rgb(255 255 255 / 0.09); }
+}
+
+@utility self {
+  background: rgb(63 63 70 / 0.5) !important;
+}
+
+@utility user-info-container {
+  flex: 1;
+}
+
+@utility user-name {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: rgb(228 228 231);
+  display: flex;
+  align-items: center;
+  gap: --spacing(1.5);
+  margin-bottom: --spacing(1);
+}
+
+@utility self-badge {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: rgb(161 161 170);
+  background: rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: --radius(full);
+  padding: 0 --spacing(1.5);
+  line-height: 1.6;
+}
+
+@utility user-id {
+  font-size: 0.7rem;
+  color: rgb(161 161 170);
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  letter-spacing: 0.03em;
+  margin-bottom: --spacing(0.5);
+}
+
+@utility user-email {
+  font-size: var(--text-xs);
+  color: rgb(113 113 122);
+}
+
+/* ── 变体 C：色点 ── */
+@utility user-variant-c {
+  display: flex;
+}
+
+@utility user-dot {
+  display: inline-block;
+  width: --spacing(2);
+  height: --spacing(2);
+  border-radius: --radius(full);
+  margin-right: --spacing(1.5);
+  flex-shrink: 0;
+  align-self: center;
+  vertical-align: middle;
+}
+
+/* ── 碰撞警告 ── */
+@utility collision {
+  color: rgb(251 191 36) !important;
+}
+
+@utility user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: --spacing(1);
+  margin-top: --spacing(1.5);
+  padding-top: --spacing(1.5);
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+}
+
+@utility action-btn {
+  padding: --spacing(0.5) --spacing(2);
+  font-size: 0.7rem;
+  border-radius: --radius(md);
+  cursor: pointer;
+  transition: opacity 0.15s;
+  border: none;
+  color: white;
+  &:hover { opacity: 0.85; }
+}
+
+@utility kick-btn { background: rgb(234 179 8); color: rgb(23 23 23); }
+@utility ban-btn { background: rgb(239 68 68); }
+@utility transfer-btn { background: rgb(168 85 247); }
+
+@utility role-select {
+  padding: --spacing(0.5) --spacing(2);
+  font-size: 0.7rem;
+  border-radius: --radius(md);
+  background: rgb(255 255 255 / 0.08);
+  color: white;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  cursor: pointer;
+}
+
+/* ── Role badges ── */
+@utility role-badge {
+  display: inline-block;
+  padding: 0 --spacing(1.5);
+  margin-left: --spacing(1.5);
+  border-radius: 9999px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+@utility role-creator { background: rgb(99 102 241 / 0.25); color: rgb(165 180 252); }
+@utility role-admin   { background: rgb(239 68 68 / 0.25);  color: rgb(252 165 165); }
+@utility role-user    { background: rgb(59 130 246 / 0.25); color: rgb(147 197 253); }
+@utility role-guest   { background: rgb(113 113 122 / 0.25); color: rgb(212 212 216); }
+
+/* ── Notification ── */
+@utility show { transform: translateX(0) !important; }
+@utility error { background: rgb(239 68 68) !important; }
+@utility warning { background: rgb(234 179 8) !important; color: rgb(23 23 23) !important; }
+
+/* ── Invite / ban lists ── */
+@utility invite-list { display: flex; flex-direction: column; gap: --spacing(1.5); }
+@utility ban-list    { display: flex; flex-direction: column; gap: --spacing(1.5); }
+
+@utility invite-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: --spacing(2);
+  padding: --spacing(2) --spacing(2.5);
+  background: rgb(39 39 42);
+  border-radius: --radius(lg);
+  font-size: var(--text-xs);
+}
+
+@utility ban-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: --spacing(2);
+  padding: --spacing(2) --spacing(2.5);
+  background: rgb(39 39 42);
+  border-radius: --radius(lg);
+  font-size: var(--text-xs);
+}
+
+@utility invite-info { flex: 1; min-width: 0; }
+@utility ban-info    { flex: 1; min-width: 0; }
+
+@utility invite-url {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: rgb(147 197 253);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: --spacing(0.5);
+}
+
+@utility invite-meta {
+  color: rgb(113 113 122);
+  font-size: 0.6rem;
+}
+
+@utility ban-meta {
+  color: rgb(113 113 122);
+  font-size: 0.6rem;
+  margin-top: --spacing(0.5);
+}
+
+@utility invite-actions {
+  display: flex;
+  gap: --spacing(1);
+  shrink: 0;
+}
+
+/* ── Debug info ── */
+@utility debug-info {
+  background: rgb(0 0 0 / 0.4);
+  padding: --spacing(2);
+  border-radius: --radius(lg);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  max-height: 160px;
+  overflow-y: auto;
+  margin-top: --spacing(2);
+  border: 1px solid rgb(255 255 255 / 0.08);
+}
+
+/* ── Room URL ── */
+@utility room-url {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Newbie guide ── */
+@utility newbie-guide {
+  position: fixed;
+  top: --spacing(5);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgb(24 24 27 / 0.95);
+  color: rgb(228 228 231);
+  padding: --spacing(3) --spacing(5);
+  border-radius: --radius(xl);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.4);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  backdrop-filter: blur(12px);
+  z-index: 1001;
+  text-align: center;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  animation: slideDown 0.4s cubic-bezier(0.16,1,0.3,1), fadeOut 0.4s ease-in 4.6s forwards;
+}
+
+@keyframes slideDown {
+  from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0);     opacity: 1; }
+}
+@keyframes fadeOut {
+  to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+}
+
+/* ── Message context menu ── */
+@utility msg-context-menu {
+  position: fixed;
+  z-index: 300;
+  background: rgb(24 24 27);
+  border: 1px solid rgb(63 63 70);
+  border-radius: --radius(xl);
+  padding: --spacing(1);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+  min-width: 100px;
+  animation: menuIn 0.1s ease-out;
+}
+
+@keyframes menuIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@utility msg-context-item {
+  display: flex;
+  align-items: center;
+  gap: --spacing(1.5);
+  width: 100%;
+  padding: --spacing(1) --spacing(2);
+  font-size: var(--text-xs);
+  color: rgb(212 212 216);
+  background: transparent;
+  border: none;
+  border-radius: --radius(lg);
+  cursor: pointer;
+  text-align: left;
+  &:hover { background: rgb(63 63 70); }
+}
+
+
+@utility sync-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@utility custom-prompt-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@utility sync-dialog {
+  background: rgb(24 24 27);
+  border: 1px solid rgb(63 63 70);
+  border-radius: --radius(2xl);
+  padding: --spacing(6);
+  width: min(360px, calc(100vw - --spacing(8)));
+  box-shadow: 0 24px 48px rgb(0 0 0 / 0.5);
+}
+
+@utility custom-prompt-dialog {
+  background: rgb(24 24 27);
+  border: 1px solid rgb(63 63 70);
+  border-radius: --radius(2xl);
+  padding: --spacing(6);
+  width: min(360px, calc(100vw - --spacing(8)));
+  box-shadow: 0 24px 48px rgb(0 0 0 / 0.5);
+}
+
+@utility sync-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: --spacing(1.5);
+  max-height: 240px;
+  overflow-y: auto;
+  margin-bottom: --spacing(4);
+}
+
+@utility sync-user-item {
+  display: flex;
+  align-items: center;
+  gap: --spacing(2.5);
+  padding: --spacing(2) --spacing(3);
+  border-radius: --radius(lg);
+  background: rgb(39 39 42);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  &:hover { background: rgb(63 63 70); }
+}
+
+@utility sync-user-name {
+  font-weight: 500;
+  color: rgb(228 228 231);
+}
+
+@utility sync-user-id {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: rgb(113 113 122);
+}
+
+@utility sync-cancel-btn {
+  padding: --spacing(1.5) --spacing(4);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-radius: --radius(lg);
+  cursor: pointer;
+  border: 1px solid rgb(63 63 70);
+  background: rgb(39 39 42);
+  color: rgb(161 161 170);
+  transition: opacity 0.15s;
+  &:hover { opacity: 0.85; }
+}
+
+@utility sync-confirm-btn {
+  padding: --spacing(1.5) --spacing(4);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-radius: --radius(lg);
+  cursor: pointer;
+  border: none;
+  background: rgb(228 228 231);
+  color: rgb(9 9 11);
+  transition: opacity 0.15s;
+  &:hover { opacity: 0.85; }
+}
+
+@utility sync-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(228 228 231);
+  margin-bottom: --spacing(3);
+}
+
+@utility sync-dialog-buttons {
+  display: flex;
+  gap: --spacing(2);
+  justify-content: flex-end;
+}
+
+@utility custom-prompt-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(228 228 231);
+  margin-bottom: --spacing(3);
+}
+
+@utility custom-prompt-input {
+  width: 100%;
+  padding: --spacing(2) --spacing(3);
+  font-size: var(--text-sm);
+  background: rgb(39 39 42);
+  border: 1px solid rgb(63 63 70);
+  border-radius: --radius(lg);
+  color: rgb(228 228 231);
+  margin-bottom: --spacing(4);
+  &::placeholder { color: rgb(113 113 122); }
+  &:focus { outline: 2px solid rgb(161 161 170); outline-offset: -1px; }
+}
+
+@utility custom-prompt-buttons {
+  display: flex;
+  gap: --spacing(2);
+  justify-content: flex-end;
+}
+
+@utility custom-prompt-btn {
+  padding: --spacing(1.5) --spacing(4);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-radius: --radius(lg);
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+  &:hover { opacity: 0.85; }
+}
+
+@utility custom-prompt-cancel {
+  background: rgb(39 39 42);
+  color: rgb(161 161 170);
+  border: 1px solid rgb(63 63 70);
+}
+
+@utility custom-prompt-confirm {
+  background: rgb(228 228 231);
+  color: rgb(9 9 11);
+}
+
+@utility admin-management { display: flex; flex-direction: column; gap: --spacing(3); }
+
+@utility admin-section {
+  padding: --spacing(3) --spacing(2.5);
+  background: rgb(0 0 0 / 0.2);
+  border-radius: --radius(xl);
+}
+
+@utility invite-form { display: flex; flex-direction: column; gap: --spacing(1.5); }
+
+@utility privacy-form { display: flex; flex-direction: column; gap: --spacing(2); }
+
+@utility privacy-label {
+  display: flex;
+  align-items: center;
+  gap: --spacing(2);
+  font-size: var(--text-xs);
+  color: rgb(212 212 216);
+  cursor: pointer;
+}
+
+/* ── Notification base ── */
+.notification {
+  background: rgb(34 197 94);
+}

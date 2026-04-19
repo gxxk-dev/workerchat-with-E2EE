@@ -10,13 +10,20 @@ function setupTabSwitching() {
         btn.addEventListener('click', () => {
             const targetTab = btn.getAttribute('data-tab');
 
-            // 移除所有active类
-            tabBtns.forEach(b => b.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
+            tabBtns.forEach(b => { b.removeAttribute('data-active'); b.classList.remove('active'); });
+            tabContents.forEach(c => { c.classList.add('hidden'); c.classList.remove('active'); });
 
-            // 添加active类到当前tab
+            btn.setAttribute('data-active', '');
             btn.classList.add('active');
-            document.getElementById(targetTab).classList.add('active');
+            const target = document.getElementById(targetTab);
+            if (target) { target.classList.remove('hidden'); target.classList.add('active'); }
         });
     });
+
+    // 初始化第一个 tab
+    const firstBtn = tabBtns[0];
+    if (firstBtn) {
+        firstBtn.setAttribute('data-active', '');
+        firstBtn.classList.add('active');
+    }
 }

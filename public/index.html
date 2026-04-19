@@ -1,163 +1,232 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="scheme-only-dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E2EE Chat</title>
-    <script src="https://unpkg.com/openpgp@6.2.0/dist/openpgp.min.js"></script>
-    <script src="https://unpkg.com/marked@11.0.0/marked.min.js"></script>
-    <script src="https://unpkg.com/dompurify@3.0.8/dist/purify.min.js"></script>
-    <script src="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/atom-one-dark.min.css">
+    <script src="vendor/openpgp.min.js"></script>
+    <script src="vendor/marked.min.js"></script>
+    <script src="vendor/purify.min.js"></script>
+    <script src="vendor/highlight.min.js"></script>
+    <link rel="stylesheet" href="vendor/atom-one-dark.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap">
     <link rel="stylesheet" href="styles.css">
+    <script src="vendor/lucide.min.js" defer></script>
 </head>
-<body>
-    <div id="overlay" class="overlay"></div>
+<body class="antialiased min-h-dvh bg-zinc-950 text-zinc-100">
 
-    <div class="container">
-        <div class="panel manage-area">
-            <div class="header">
-                <h2>在线用户</h2>
-                <div id="connectionStatus" class="connection-status status-disconnected">
-                    未连接
-                </div>
-            </div>
-            <div class="user-list" id="userList">
-                <div style="text-align: center; color: #999; padding: 20px;">
-                    等待连接...
-                </div>
-            </div>
+<div class="isolate flex h-dvh max-w-[1280px] mx-auto w-full gap-3 p-3">
+<div id="overlay" class="fixed inset-0 bg-black/50 z-[100] hidden"></div>
 
-            <!-- Tab切换区域 -->
-            <div class="tab-container">
-                <div class="tab-header">
-                    <button class="tab-btn active" data-tab="keyManagement">密钥管理</button>
-                    <button class="tab-btn" data-tab="roomSettings">房间设置</button>
-                </div>
-
-                <!-- 密钥管理Tab -->
-                <div class="tab-content active" id="keyManagement">
-                    <div class="key-management">
-                        <div class="key-info">
-                            <div>你的密钥ID:</div>
-                            <div id="keyId" class="key-id">未注册</div>
-                        </div>
-                        <div class="key-buttons">
-                            <button id="importPublicKey">导入公钥</button>
-                            <button id="importPrivateKey">导入私钥</button>
-                            <button id="copyPublicKey">复制公钥</button>
-                            <button id="generateKeys">生成密钥</button>
-                        </div>
-                        <div class="debug-info" id="debugInfo"></div>
-                    </div>
-                </div>
-
-                <!-- 房间设置Tab -->
-                <div class="tab-content" id="roomSettings">
-                    <div class="admin-management">
-                <!-- 房间类型转换 -->
-                <div class="admin-section" id="roomTypeSection" style="display:none;">
-                    <h3>房间设置</h3>
-                    <button id="convertRoomTypeBtn" class="admin-btn">转换房间类型</button>
-                </div>
-
-                <!-- 邀请链接生成 -->
-                <div class="admin-section" id="inviteSection" style="display:none;">
-                    <h3>邀请链接</h3>
-                    <div class="invite-form">
-                        <select id="inviteRole" class="admin-select">
-                            <option value="admin">Admin</option>
-                            <option value="user" selected>用户</option>
-                            <option value="guest">Guest</option>
-                        </select>
-                        <input type="number" id="inviteExpires" class="admin-input" placeholder="过期时间(小时)" min="1">
-                        <input type="number" id="inviteMaxUsage" class="admin-input" placeholder="最大使用次数" min="1">
-                        <button id="generateInviteLinkBtn" class="admin-btn">生成邀请链接</button>
-                    </div>
-                    <div id="inviteList" class="invite-list"></div>
-                </div>
-
-                <!-- 封禁列表 -->
-                <div class="admin-section" id="banListSection" style="display:none;">
-                    <h3>封禁列表</h3>
-                    <div id="banList" class="ban-list"></div>
-                </div>
-
-                <!-- 隐私配置 -->
-                <div class="admin-section" id="privacySection" style="display:none;">
-                    <h3>隐私设置</h3>
-                    <div class="privacy-form">
-                        <label class="privacy-label">
-                            <input type="checkbox" id="guestCanViewMessages" checked>
-                            <span>Guest 可查看消息</span>
-                        </label>
-                        <label class="privacy-label">
-                            <input type="checkbox" id="guestCanViewUserList" checked>
-                            <span>Guest 可查看用户列表</span>
-                        </label>
-                        <label class="privacy-label">
-                            <input type="checkbox" id="requireInviteToJoin">
-                            <span>需要邀请链接才能加入</span>
-                        </label>
-                        <button id="updatePrivacyConfigBtn" class="admin-btn">保存设置</button>
-                    </div>
-                </div>
-
-                <!-- 消息计数配置 -->
-                <div class="admin-section" id="messageCountSection" style="display:none;">
-                    <h3>消息计数设置</h3>
-                    <div class="privacy-form">
-                        <label class="privacy-label">
-                            <input type="checkbox" id="enableMessageCount">
-                            <span>启用消息计数功能</span>
-                        </label>
-                        <label class="privacy-label">
-                            <input type="checkbox" id="messageCountVisibleToUser">
-                            <span>User 可见消息计数</span>
-                        </label>
-                        <label class="privacy-label" id="messageCountGuestLabel">
-                            <input type="checkbox" id="messageCountVisibleToGuest">
-                            <span>Guest 可见消息计数</span>
-                        </label>
-                        <button id="updateMessageCountConfigBtn" class="admin-btn">保存设置</button>
-                    </div>
-                </div>
-                    </div>
-                </div>
-                <!-- 房间设置Tab结束 -->
-            </div>
-            <!-- Tab容器结束 -->
-        </div>
-
-        <div class="panel chat-area">
-            <div class="header">
-                <h2 id="roomName">E2EE Chat Room</h2>
-                <div class="room-url" id="roomUrl"></div>
-            </div>
-            <div class="messages" id="messages"></div>
-                <div class="input-area">
-                    <textarea id="messageInput" placeholder="输入消息..." rows="1" disabled></textarea>
-                    <button id="sendButton" disabled>发送</button>
-                </div>
-        </div>
+  <!-- Sidebar -->
+  <aside class="w-72 shrink-0 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-[101] max-md:w-72 max-md:-translate-x-full max-md:data-[open]:translate-x-0 max-md:transition-transform max-md:duration-300 max-md:rounded-none" data-panel="manage">
+    <div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between shrink-0">
+      <span class="text-sm font-semibold">在线用户</span>
+      <div id="connectionStatus" class="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 tabular-nums">未连接</div>
     </div>
-    
-    <div class="notification" id="notification"></div>
+    <div class="user-list flex-1 overflow-y-auto scrollbar-thin px-2 py-2" id="userList">
+      <p class="text-center text-zinc-500 text-sm py-5">等待连接...</p>
+    </div>
+    <div class="border-t border-zinc-800 shrink-0">
+      <div class="flex">
+        <button class="tab-btn flex-1 py-2.5 text-xs font-medium text-zinc-400 border-b-2 border-transparent data-[active]:border-zinc-100 data-[active]:text-zinc-100" data-tab="keyManagement" type="button">密钥管理</button>
+        <button class="tab-btn flex-1 py-2.5 text-xs font-medium text-zinc-400 border-b-2 border-transparent data-[active]:border-zinc-100 data-[active]:text-zinc-100" data-tab="roomSettings" type="button">房间设置</button>
+      </div>
+      <div class="tab-content overflow-y-auto scrollbar-thin h-48 p-3" id="keyManagement">
+        <div class="bg-zinc-800/60 rounded-lg p-3 mb-3">
+          <p class="text-xs text-zinc-500 mb-1">你的密钥 ID</p>
+          <p id="keyId" class="font-mono text-[0.65rem] text-emerald-400 truncate cursor-pointer hover:text-emerald-300 transition-colors" title="" onclick="copyKeyId()">未注册</p>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button id="importPublicKey" type="button" class="px-2 py-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 rounded-lg">导入公钥</button>
+          <button id="importPrivateKey" type="button" class="px-2 py-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 rounded-lg">导入私钥</button>
+          <button id="copyPublicKey" type="button" class="px-2 py-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 rounded-lg">复制公钥</button>
+          <button id="generateKeys" type="button" class="px-2 py-1.5 text-xs bg-zinc-700 hover:bg-zinc-600 rounded-lg">生成密钥</button>
+        </div>
+        <div class="debug-info hidden" id="debugInfo"></div>
 
-    <!-- JavaScript 模块 -->
-    <script src="js/markdown-config.js"></script>
-    <script src="js/dom.js"></script>
-    <script src="js/state.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/crypto.js"></script>
-    <script src="js/heartbeat.js"></script>
-    <script src="js/websocket.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/messages.js"></script>
-    <script src="js/users.js"></script>
-    <script src="js/admin.js"></script>
-    <script src="js/tabs.js"></script>
-    <script src="js/sidebar.js"></script>
-    <script src="js/init.js"></script>
+        <!-- 智能卡折叠入口 -->
+        <div class="mt-2">
+          <button id="smartCardToggle" type="button"
+            class="w-full flex items-center justify-between px-2 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 rounded-lg hover:bg-zinc-800/60 transition-colors">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="credit-card" class="size-3"></i>
+              智能卡
+            </span>
+            <span id="smartCardConnectedDot" class="hidden size-1.5 rounded-full bg-emerald-400"></span>
+          </button>
+        </div>
+      </div>
+      <div class="tab-content hidden overflow-y-auto scrollbar-thin h-48 p-3" id="roomSettings">
+        <div class="admin-management">
+          <div class="admin-section hidden" id="roomTypeSection">
+            <p class="text-xs font-medium text-zinc-400 mb-2">房间设置</p>
+            <button id="convertRoomTypeBtn" type="button" class="w-full py-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 rounded-lg">转换房间类型</button>
+          </div>
+          <div class="admin-section hidden" id="inviteSection">
+            <p class="text-xs font-medium text-zinc-400 mb-2">邀请链接</p>
+            <div class="flex flex-col gap-1.5 mb-2">
+              <span class="inline-grid w-full grid-cols-[1fr_--spacing(8)]">
+                <select id="inviteRole" name="inviteRole" aria-label="邀请角色" class="col-span-full row-start-1 w-full px-2 py-1.5 text-xs bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 appearance-none pr-8">
+                  <option value="admin">Admin</option><option value="user" selected>用户</option><option value="guest">Guest</option>
+                </select>
+                <svg viewBox="0 0 8 5" width="8" height="5" fill="none" class="pointer-events-none col-start-2 row-start-1 place-self-center">
+                  <path d="M.5.5 4 4 7.5.5" stroke="currentcolor" />
+                </svg>
+              </span>
+              <input type="number" id="inviteExpires" name="inviteExpires" aria-label="过期时间" class="w-full px-2 py-1.5 text-xs bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder:text-zinc-500" placeholder="过期时间(小时)" min="1">
+              <input type="number" id="inviteMaxUsage" name="inviteMaxUsage" aria-label="最大使用次数" class="w-full px-2 py-1.5 text-xs bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder:text-zinc-500" placeholder="最大使用次数" min="1">
+              <button id="generateInviteLinkBtn" type="button" class="w-full py-1.5 text-xs bg-zinc-700 hover:bg-zinc-600 rounded-lg">生成邀请链接</button>
+            </div>
+            <div id="inviteList" class="invite-list space-y-1"></div>
+          </div>
+          <div class="admin-section hidden" id="banListSection">
+            <p class="text-xs font-medium text-zinc-400 mb-2">封禁列表</p>
+            <div id="banList" class="ban-list space-y-1"></div>
+          </div>
+          <div class="admin-section hidden" id="privacySection">
+            <p class="text-xs font-medium text-zinc-400 mb-2">隐私设置</p>
+            <div class="flex flex-col gap-2">
+              <label class="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer" for="guestCanViewMessages"><span class="group inline-grid size-5 sm:size-4 grid-cols-1">
+                <input type="checkbox" id="guestCanViewMessages" name="guestCanViewMessages" checked class="checked:border-zinc-400 checked:bg-zinc-400 indeterminate:border-zinc-400 indeterminate:bg-zinc-400 focus-visible:outline-zinc-400 col-start-1 row-start-1 appearance-none rounded-sm border border-white/20 bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 forced-colors:appearance-auto" />
+                <svg viewBox="0 0 14 14" fill="none" class="pointer-events-none col-start-1 row-start-1 size-7/8 self-center justify-self-center stroke-white"><path d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-checked:opacity-0" /><path d="M3 7H11" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-indeterminate:opacity-0" /></svg>
+              </span> Guest 可查看消息</label>
+              <label class="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer" for="guestCanViewUserList"><span class="group inline-grid size-5 sm:size-4 grid-cols-1">
+                <input type="checkbox" id="guestCanViewUserList" name="guestCanViewUserList" checked class="checked:border-zinc-400 checked:bg-zinc-400 indeterminate:border-zinc-400 indeterminate:bg-zinc-400 focus-visible:outline-zinc-400 col-start-1 row-start-1 appearance-none rounded-sm border border-white/20 bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 forced-colors:appearance-auto" />
+                <svg viewBox="0 0 14 14" fill="none" class="pointer-events-none col-start-1 row-start-1 size-7/8 self-center justify-self-center stroke-white"><path d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-checked:opacity-0" /><path d="M3 7H11" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-indeterminate:opacity-0" /></svg>
+              </span> Guest 可查看用户列表</label>
+              <label class="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer" for="requireInviteToJoin"><span class="group inline-grid size-5 sm:size-4 grid-cols-1">
+                <input type="checkbox" id="requireInviteToJoin" name="requireInviteToJoin" class="checked:border-zinc-400 checked:bg-zinc-400 indeterminate:border-zinc-400 indeterminate:bg-zinc-400 focus-visible:outline-zinc-400 col-start-1 row-start-1 appearance-none rounded-sm border border-white/20 bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 forced-colors:appearance-auto" />
+                <svg viewBox="0 0 14 14" fill="none" class="pointer-events-none col-start-1 row-start-1 size-7/8 self-center justify-self-center stroke-white"><path d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-checked:opacity-0" /><path d="M3 7H11" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-indeterminate:opacity-0" /></svg>
+              </span> 需要邀请链接才能加入</label>
+              <button id="updatePrivacyConfigBtn" type="button" class="w-full py-1.5 text-xs bg-zinc-700 hover:bg-zinc-600 rounded-lg">保存设置</button>
+            </div>
+          </div>
+          <div class="admin-section hidden" id="messageCountSection">
+            <p class="text-xs font-medium text-zinc-400 mb-2">消息计数设置</p>
+            <div class="flex flex-col gap-2">
+              <label class="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer" for="enableMessageCount"><span class="group inline-grid size-5 sm:size-4 grid-cols-1">
+                <input type="checkbox" id="enableMessageCount" name="enableMessageCount" class="checked:border-zinc-400 checked:bg-zinc-400 indeterminate:border-zinc-400 indeterminate:bg-zinc-400 focus-visible:outline-zinc-400 col-start-1 row-start-1 appearance-none rounded-sm border border-white/20 bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 forced-colors:appearance-auto" />
+                <svg viewBox="0 0 14 14" fill="none" class="pointer-events-none col-start-1 row-start-1 size-7/8 self-center justify-self-center stroke-white"><path d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-checked:opacity-0" /><path d="M3 7H11" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-indeterminate:opacity-0" /></svg>
+              </span> 启用消息计数功能</label>
+              <label class="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer" for="messageCountVisibleToUser"><span class="group inline-grid size-5 sm:size-4 grid-cols-1">
+                <input type="checkbox" id="messageCountVisibleToUser" name="messageCountVisibleToUser" class="checked:border-zinc-400 checked:bg-zinc-400 indeterminate:border-zinc-400 indeterminate:bg-zinc-400 focus-visible:outline-zinc-400 col-start-1 row-start-1 appearance-none rounded-sm border border-white/20 bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 forced-colors:appearance-auto" />
+                <svg viewBox="0 0 14 14" fill="none" class="pointer-events-none col-start-1 row-start-1 size-7/8 self-center justify-self-center stroke-white"><path d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-checked:opacity-0" /><path d="M3 7H11" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-indeterminate:opacity-0" /></svg>
+              </span> User 可见消息计数</label>
+              <label id="messageCountGuestLabel" class="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer" for="messageCountVisibleToGuest"><span class="group inline-grid size-5 sm:size-4 grid-cols-1">
+                <input type="checkbox" id="messageCountVisibleToGuest" name="messageCountVisibleToGuest" class="checked:border-zinc-400 checked:bg-zinc-400 indeterminate:border-zinc-400 indeterminate:bg-zinc-400 focus-visible:outline-zinc-400 col-start-1 row-start-1 appearance-none rounded-sm border border-white/20 bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 forced-colors:appearance-auto" />
+                <svg viewBox="0 0 14 14" fill="none" class="pointer-events-none col-start-1 row-start-1 size-7/8 self-center justify-self-center stroke-white"><path d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-checked:opacity-0" /><path d="M3 7H11" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-not-has-indeterminate:opacity-0" /></svg>
+              </span> Guest 可见消息计数</label>
+              <button id="updateMessageCountConfigBtn" type="button" class="w-full py-1.5 text-xs bg-zinc-700 hover:bg-zinc-600 rounded-lg">保存设置</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Chat -->
+  <main class="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden min-w-0">
+    <div class="px-4 py-3 border-b border-zinc-800 shrink-0 flex items-center gap-3">
+      <button type="button" class="slide-toggle md:hidden shrink-0 size-8 flex items-center justify-center rounded-lg hover:bg-zinc-800 relative" aria-label="切换侧边栏">
+        <i data-lucide="menu" class="size-4 text-zinc-400"></i>
+        <span class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-x-1/2 -translate-y-1/2 pointer-fine:hidden" aria-hidden="true"></span>
+      </button>
+      <div class="min-w-0 flex-1">
+        <h2 id="roomName" class="text-sm font-semibold truncate">E2EE Chat Room</h2>
+        <div class="flex items-center gap-2 mt-0.5 min-w-0" id="roomUrl"></div>
+      </div>
+    </div>
+    <div class="messages flex-1 overflow-y-auto scrollbar-thin p-3 flex flex-col gap-2" id="messages"></div>
+    <div id="batchSyncBar" class="hidden px-3 py-2.5 border-t border-zinc-800 flex items-center gap-3 shrink-0 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:bg-zinc-900 max-md:z-[99]">
+      <span id="batchSyncCount" class="text-xs text-zinc-400 flex-1">已选 0 条</span>
+      <button id="batchSelectAllBtn" type="button" class="px-2.5 py-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300">全选</button>
+      <button id="batchSyncConfirmBtn" type="button" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-500 rounded-lg text-white disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+        <i data-lucide="share-2" class="size-3.5"></i>同步选中
+      </button>
+      <button id="batchSyncCancelBtn" type="button" class="px-2.5 py-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-400">
+        取消
+      </button>
+    </div>
+    <div class="input-area px-3 py-2.5 border-t border-zinc-800 flex flex-wrap gap-2 items-end shrink-0 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:bg-zinc-900 max-md:z-[99]">
+      <textarea id="messageInput" name="messageInput" aria-label="消息输入" placeholder="输入消息..." rows="1" disabled class="flex-1 px-3 py-2 text-sm bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder:text-zinc-500 resize-none min-h-[38px] max-h-32 focus-visible:outline-2 focus-visible:outline-zinc-500 -outline-offset-1 disabled:opacity-40"></textarea>
+      <button id="sendButton" type="button" disabled class="px-3 py-2 text-sm font-medium bg-zinc-100 text-zinc-900 rounded-lg hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed shrink-0 focus-visible:outline-2 focus-visible:outline-zinc-500 focus-visible:outline-offset-2">发送</button>
+    </div>
+  </main>
+
+</div>
+
+<!-- 智能卡抽屉 -->
+<div id="smartCardDrawer" class="fixed inset-0 z-[150] hidden" role="dialog" aria-modal="true" aria-label="智能卡管理">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="smartCardDrawerOverlay"></div>
+  <div class="absolute bottom-0 inset-x-0 md:inset-y-0 md:left-auto md:right-0 md:w-80 flex flex-col bg-zinc-900 border-t md:border-t-0 md:border-l border-zinc-800 shadow-2xl" id="smartCardDrawerPanel">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0">
+      <div class="flex items-center gap-2">
+        <i data-lucide="credit-card" class="size-4 text-zinc-400"></i>
+        <span class="text-sm font-semibold">智能卡</span>
+      </div>
+      <button id="smartCardDrawerClose" type="button" class="relative size-8 flex items-center justify-center rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200">
+        <i data-lucide="x" class="size-4"></i>
+        <span class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-x-1/2 -translate-y-1/2 pointer-fine:hidden" aria-hidden="true"></span>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-3">
+      <!-- 连接状态 -->
+      <div class="bg-zinc-800/60 rounded-xl p-3">
+        <div class="flex items-center gap-2 mb-1">
+          <span id="scStatusDot" class="size-2 rounded-full bg-zinc-600 shrink-0"></span>
+          <span id="scStatusText" class="text-xs font-medium text-zinc-400">未连接</span>
+        </div>
+        <p id="scDeviceName" class="font-mono text-[0.65rem] text-zinc-500 truncate">—</p>
+        <p id="scKeyFingerprint" class="font-mono text-[0.65rem] text-zinc-600 truncate mt-0.5 hidden"></p>
+      </div>
+      <!-- PIN 状态 -->
+      <div id="scPinCard" class="hidden bg-zinc-800/40 rounded-xl p-3 border border-zinc-700/40">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="lock-open" class="size-3.5 text-emerald-400" id="scPinIcon"></i>
+            <span class="text-xs text-zinc-300" id="scPinLabel">PIN 已验证</span>
+          </div>
+          <button id="scLockPinBtn" type="button" class="text-[0.65rem] px-2 py-0.5 rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-300">锁定</button>
+        </div>
+      </div>
+      <!-- 操作 -->
+      <div class="space-y-1.5">
+        <button id="scConnectBtn" type="button" class="w-full px-3 py-2 text-xs font-medium bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors">连接智能卡</button>
+        <button id="scDecryptBtn" type="button" disabled class="w-full px-3 py-2 text-xs font-medium bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed">使用智能卡解密</button>
+        <button id="scDisconnectBtn" type="button" class="hidden w-full px-3 py-2 text-xs font-medium bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors text-red-400 hover:text-red-300">断开连接</button>
+      </div>
+      <p class="text-[0.65rem] text-zinc-600 leading-relaxed">支持 YubiKey 及其他 OpenPGP 智能卡。连接后输入 PIN，本次会话内自动解密，关闭页面后 PIN 自动清除。</p>
+    </div>
+  </div>
+</div>
+
+<div class="fixed top-5 right-5 z-[200] flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium shadow-2xl ring-1 ring-white/10 backdrop-blur-sm transition-all duration-300 max-w-xs bg-zinc-900/95 translate-x-[calc(100%+1.25rem)] data-[show]:translate-x-0" id="notification">
+  <i data-lucide="check-circle" class="notification-icon size-4 shrink-0 text-emerald-400"></i>
+  <span class="notification-text"></span>
+</div>
+
+<script src="js/markdown-config.js"></script>
+<script src="js/dom.js"></script>
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/smartcard.js"></script>
+<script src="js/heartbeat.js"></script>
+<script src="js/websocket.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/messages.js"></script>
+<script src="js/users.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/tabs.js"></script>
+<script src="js/sidebar.js"></script>
+<script src="js/init.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  });
+</script>
 </body>
 </html>

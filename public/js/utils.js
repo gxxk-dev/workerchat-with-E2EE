@@ -49,6 +49,30 @@ window.addEventListener('resize', () => {
     const _ = window.isMobile;
 });
 
+// 根据用户 ID（PGP 指纹）生成确定性 HSL 颜色
+function getUserColor(id) {
+    // FNV-1a → 黄金角色相，天然均匀无聚集
+    let h = 0x811c9dc5;
+    for (let i = 0; i < id.length; i++) {
+        h ^= id.charCodeAt(i);
+        h = (h * 0x01000193) >>> 0;
+    }
+    const hue = (h * 137.508) % 360;
+    return `hsl(${hue | 0}, 65%, 62%)`;
+}
+
+// 检测 Short ID（后8位）碰撞，返回需要显示长 ID 的用户 ID 集合
+function getShortIdCollisions(userMap) {
+    const seen = new Map();
+    const collisions = new Set();
+    for (const [id] of userMap) {
+        const short = id.slice(-8);
+        if (seen.has(short)) { collisions.add(id); collisions.add(seen.get(short)); }
+        else seen.set(short, id);
+    }
+    return collisions;
+}
+
 // 获取房间ID
 async function fetchRoomId() {
     try {
@@ -78,20 +102,24 @@ function debugLog(message) {
 
 // 显示通知
 function showNotification(message, type = 'success') {
-    DOM.notification.textContent = message;
-    DOM.notification.className = 'notification';
+    const el = DOM.notification;
+    const iconEl = el.querySelector('.notification-icon');
+    const textEl = el.querySelector('.notification-text');
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle' };
+    const colors = { success: 'text-emerald-400', error: 'text-red-400', warning: 'text-amber-400' };
 
-    if (type === 'error') {
-        DOM.notification.classList.add('error');
-    } else if (type === 'warning') {
-        DOM.notification.classList.add('warning');
+    if (textEl) textEl.textContent = message;
+    if (iconEl) {
+        const newIcon = document.createElement('i');
+        newIcon.className = `notification-icon size-4 shrink-0 ${colors[type] || colors.success}`;
+        newIcon.setAttribute('data-lucide', icons[type] || icons.success);
+        iconEl.replaceWith(newIcon);
+        if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [newIcon] });
     }
 
-    DOM.notification.classList.add('show');
-
-    setTimeout(() => {
-        DOM.notification.classList.remove('show');
-    }, 3000);
+    el.setAttribute('data-show', '');
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => el.removeAttribute('data-show'), 3000);
 }
 
 // 获取URL参数（支持短参数r和i）
@@ -248,6 +276,82 @@ function checkBrowserSupport() {
 // ========================
 // 自定义输入对话框 (替代 prompt)
 // ========================
+
+// 显示自定义二选一对话框，返回 true/false/null(取消)
+function customChoice(message, optionA, optionB) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-prompt-overlay';
+        const dialog = document.createElement('div');
+        dialog.className = 'custom-prompt-dialog';
+        const titleEl = document.createElement('div');
+        titleEl.className = 'custom-prompt-title';
+        titleEl.textContent = message;
+        const buttons = document.createElement('div');
+        buttons.className = 'custom-prompt-buttons';
+        const btnA = document.createElement('button');
+        btnA.textContent = optionA;
+        btnA.className = 'custom-prompt-btn custom-prompt-cancel';
+        btnA.type = 'button';
+        btnA.onclick = () => { document.body.removeChild(overlay); resolve(false); };
+        const btnB = document.createElement('button');
+        btnB.textContent = optionB;
+        btnB.className = 'custom-prompt-btn custom-prompt-confirm';
+        btnB.type = 'button';
+        btnB.onclick = () => { document.body.removeChild(overlay); resolve(true); };
+        overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.body.removeChild(overlay); resolve(null); } });
+        buttons.appendChild(btnA);
+        buttons.appendChild(btnB);
+        dialog.appendChild(titleEl);
+        dialog.appendChild(buttons);
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+        btnB.focus();
+    });
+}
+
+// 显示自定义确认对话框
+function customConfirm(message) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-prompt-overlay';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'custom-prompt-dialog';
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'custom-prompt-title';
+        titleEl.textContent = message;
+
+        const buttons = document.createElement('div');
+        buttons.className = 'custom-prompt-buttons';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = '取消';
+        cancelBtn.className = 'custom-prompt-btn custom-prompt-cancel';
+        cancelBtn.type = 'button';
+        cancelBtn.onclick = () => { document.body.removeChild(overlay); resolve(false); };
+
+        const confirmBtn = document.createElement('button');
+        confirmBtn.textContent = '确定';
+        confirmBtn.className = 'custom-prompt-btn custom-prompt-confirm';
+        confirmBtn.type = 'button';
+        confirmBtn.onclick = () => { document.body.removeChild(overlay); resolve(true); };
+
+        overlay.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') confirmBtn.click();
+            else if (e.key === 'Escape') cancelBtn.click();
+        });
+
+        buttons.appendChild(cancelBtn);
+        buttons.appendChild(confirmBtn);
+        dialog.appendChild(titleEl);
+        dialog.appendChild(buttons);
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+        confirmBtn.focus();
+    });
+}
 
 // 显示自定义输入对话框
 function customPrompt(title, placeholder = '', defaultValue = '') {

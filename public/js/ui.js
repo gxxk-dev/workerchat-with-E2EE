@@ -3,21 +3,17 @@
 // ========================
 
 function updateConnectionStatus(status) {
-    DOM.connectionStatus.className = `connection-status status-${status}`;
-    switch (status) {
-        case 'connected':
-            DOM.connectionStatus.textContent = '已连接';
-            break;
-        case 'no-key':
-            DOM.connectionStatus.textContent = '已连接';
-            break;
-        case 'connecting':
-            DOM.connectionStatus.textContent = '连接中...';
-            break;
-        case 'disconnected':
-            DOM.connectionStatus.textContent = '未连接';
-            break;
-    }
+    const el = DOM.connectionStatus;
+    const base = 'text-xs px-2 py-0.5 rounded-full tabular-nums';
+    const styles = {
+        connected:    `${base} bg-emerald-500/20 text-emerald-400`,
+        'no-key':     `${base} bg-yellow-500/20 text-yellow-400`,
+        connecting:   `${base} bg-yellow-500/20 text-yellow-400`,
+        disconnected: `${base} bg-red-500/20 text-red-400`,
+    };
+    el.className = styles[status] || styles.disconnected;
+    const labels = { connected: '已连接', 'no-key': '已连接', connecting: '连接中...', disconnected: '未连接' };
+    el.textContent = labels[status] || '未连接';
 }
 
 // 手动断开/重连
@@ -45,16 +41,10 @@ function handleConnectionStatusClick() {
 
 function enableUI() {
     if (publicKey) {
-        // 检查是否有发送消息的权限（Guest没有）
         const canSendMessages = roomInfo.yourRole !== 'guest';
         DOM.messageInput.disabled = !canSendMessages;
         DOM.sendButton.disabled = !canSendMessages;
-
-        if (!canSendMessages) {
-            DOM.messageInput.placeholder = 'Guest无法发送消息';
-        } else {
-            DOM.messageInput.placeholder = '输入消息...';
-        }
+        DOM.messageInput.placeholder = canSendMessages ? '输入消息...' : 'Guest无法发送消息';
     }
 }
 
@@ -77,31 +67,16 @@ function updateUIBasedOnRole() {
     const privacySection = document.getElementById('privacySection');
     const messageCountSection = document.getElementById('messageCountSection');
 
-    if (roomTypeSection) {
-        roomTypeSection.style.display = isCreator ? 'block' : 'none';
-    }
+    const toggle = (el, show) => el && el.classList.toggle('hidden', !show);
 
-    if (inviteSection) {
-        inviteSection.style.display = (isPrivate && hasManagePermission) ? 'block' : 'none';
-    }
+    toggle(roomTypeSection, isCreator);
+    toggle(inviteSection, isPrivate && hasManagePermission);
+    toggle(banListSection, isPrivate && hasManagePermission);
+    toggle(privacySection, isPrivate && isCreator);
+    toggle(messageCountSection, isCreator);
 
-    if (banListSection) {
-        banListSection.style.display = (isPrivate && hasManagePermission) ? 'block' : 'none';
-    }
-
-    if (privacySection) {
-        privacySection.style.display = (isPrivate && isCreator) ? 'block' : 'none';
-    }
-
-    if (messageCountSection) {
-        messageCountSection.style.display = isCreator ? 'block' : 'none';
-    }
-
-    // 在public room下隐藏Guest相关选项
     const messageCountGuestLabel = document.getElementById('messageCountGuestLabel');
-    if (messageCountGuestLabel) {
-        messageCountGuestLabel.style.display = isPrivate ? 'flex' : 'none';
-    }
+    toggle(messageCountGuestLabel, isPrivate);
 
     // 更新转换按钮文本
     const convertBtn = document.getElementById('convertRoomTypeBtn');
@@ -120,20 +95,19 @@ function updateUIBasedOnRole() {
     if (roomSettingsTab) {
         // 只有creator或admin才能看到房间设置Tab
         if (hasManagePermission || isCreator) {
-            roomSettingsTab.style.display = 'flex';
+            roomSettingsTab.classList.remove('hidden');
         } else {
-            roomSettingsTab.style.display = 'none';
+            roomSettingsTab.classList.add('hidden');
             // 如果当前在房间设置Tab，切换回密钥管理
             const roomSettingsContent = document.getElementById('roomSettings');
-            if (roomSettingsContent && roomSettingsContent.classList.contains('active')) {
-                // 切换到密钥管理Tab
+            if (roomSettingsContent && !roomSettingsContent.classList.contains('hidden')) {
                 const keyManagementTab = document.querySelector('[data-tab="keyManagement"]');
                 const keyManagementContent = document.getElementById('keyManagement');
                 if (keyManagementTab && keyManagementContent) {
-                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                    keyManagementTab.classList.add('active');
-                    keyManagementContent.classList.add('active');
+                    document.querySelectorAll('.tab-btn').forEach(b => { b.removeAttribute('data-active'); b.classList.remove('active'); });
+                    document.querySelectorAll('.tab-content').forEach(c => { c.classList.add('hidden'); c.classList.remove('active'); });
+                    keyManagementTab.setAttribute('data-active', '');
+                    keyManagementContent.classList.remove('hidden');
                 }
             }
         }
@@ -151,6 +125,17 @@ function updateUIBasedOnRole() {
             DOM.messageInput.placeholder = '输入消息...';
         }
     }
+}
+
+function setKeyIdDisplay(id) {
+    DOM.keyId.textContent = id;
+    DOM.keyId.title = id;
+}
+
+function copyKeyId() {
+    const id = DOM.keyId.title;
+    if (!id || id === '未注册') return;
+    navigator.clipboard.writeText(id).then(() => showNotification('密钥 ID 已复制'));
 }
 
 // 事件监听器设置

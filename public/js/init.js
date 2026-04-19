@@ -58,7 +58,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.title = `E2EE Chat #${roomId}`;
 
     DOM.roomUrl.innerHTML = `
-        <span id="copyRoomLink">${window.location.href} <span style="margin-left: 10px; padding: 4px 8px; background: var(--primary); border: none; border-radius: 4px; color: white; cursor: pointer;">复制链接</span></span>
+        <span class="room-url font-mono text-[0.65rem] text-zinc-500 flex-1 min-w-0 truncate">${window.location.href}</span>
+        <button id="copyRoomLink" type="button" class="shrink-0 text-[0.65rem] px-2 py-0.5 rounded bg-zinc-700 text-zinc-300 hover:bg-zinc-600 transition-colors">复制链接</button>
     `;
 
     // 添加复制房间链接按钮
@@ -76,6 +77,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 设置事件监听器
     setupEventListeners();
+    setupSmartCardEvents();
 
     // 显示新手指导（页面加载完成后立即显示）
     setTimeout(() => showNewbieGuide(), 500); // 延迟500ms确保界面完全渲染

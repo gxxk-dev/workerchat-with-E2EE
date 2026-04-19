@@ -118,11 +118,7 @@ async function handleWebSocketMessage(data) {
             userEmail = data.profile.email;
 
             // 显示密钥指纹(如果已初始化)或服务器ID
-            if (userFingerprint) {
-                DOM.keyId.textContent = userFingerprint;
-            } else {
-                DOM.keyId.textContent = userId;
-            }
+            setKeyIdDisplay(userFingerprint || userId);
 
             if (data.assignedRole) {
                 roomInfo.yourRole = data.assignedRole;

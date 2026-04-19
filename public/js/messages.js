@@ -89,9 +89,9 @@ function displayEncryptedMessage(message, reason) {
     senderNameEl.className = 'sender-name';
     senderNameEl.textContent = senderInfo.name;
 
-    const senderIdEl = document.createElement('span');
+    const senderIdEl = document.createElement('div');
     senderIdEl.className = 'sender-id';
-    senderIdEl.textContent = `[${message.senderId.slice(-16)}]`;
+    senderIdEl.textContent = message.senderId.slice(-8).toUpperCase().replace(/(.{4})/g, '$1 ').trim();
 
     const messageTimeEl = document.createElement('span');
     messageTimeEl.className = 'message-time';
@@ -156,6 +156,12 @@ function displayMessage({ senderId, text, timestamp, isSelf, messageNumber, repl
         }
     }
 
+    if (messageNumber && roomId) {
+        const storageKey = `lastSeenMessageCount_${roomId}`;
+        const current = parseInt(localStorage.getItem(storageKey) || '0', 10);
+        if (messageNumber > current) localStorage.setItem(storageKey, String(messageNumber));
+    }
+
     const messageEl = document.createElement('div');
     messageEl.className = `message ${isSelf ? 'sent' : 'received'}`;
 
@@ -217,15 +223,24 @@ function displayMessage({ senderId, text, timestamp, isSelf, messageNumber, repl
     // 创建发送者名称部分
     const senderNameEl = document.createElement('span');
     senderNameEl.className = 'sender-name';
-    senderNameEl.textContent = senderInfo.name;
 
-    // 创建发送者ID部分
-    const senderIdEl = document.createElement('span');
-    senderIdEl.className = 'sender-id';
-    senderIdEl.textContent = ` [${senderId.slice(-16)}]`;
+    if (isSelf) {
+        // 自己的消息只显示时间，不显示名字和指纹
+        senderInfoEl.appendChild(senderNameEl);
+    } else {
+        const dot = document.createElement('span');
+        dot.className = 'user-dot';
+        dot.style.background = getUserColor(senderId);
+        senderNameEl.appendChild(dot);
+        senderNameEl.appendChild(document.createTextNode(senderInfo.name));
 
-    // 将名称和ID添加到发送者名称元素中
-    senderNameEl.appendChild(senderIdEl);
+        const senderIdEl = document.createElement('div');
+        senderIdEl.className = 'sender-id';
+        senderIdEl.textContent = senderId.slice(-8).toUpperCase().replace(/(.{4})/g, '$1 ').trim();
+
+        senderInfoEl.appendChild(senderNameEl);
+        senderInfoEl.appendChild(senderIdEl);
+    }
 
     // 创建时间部分
     const messageTimeEl = document.createElement('span');
@@ -257,8 +272,7 @@ function displayMessage({ senderId, text, timestamp, isSelf, messageNumber, repl
         messageTimeEl.appendChild(messageNumberEl);
     }
 
-    // 将名称和时间添加到发送者信息元素中
-    senderInfoEl.appendChild(senderNameEl);
+    // 将时间添加到发送者信息元素中
     senderInfoEl.appendChild(messageTimeEl);
 
     // 创建消息文本部分
@@ -280,38 +294,23 @@ function displayMessage({ senderId, text, timestamp, isSelf, messageNumber, repl
     messageEl.appendChild(senderInfoEl);
     messageEl.appendChild(messageTextEl);
 
-    // 添加回复按钮（只对非Guest用户显示）
+    // 右键/长按弹出操作菜单（只对非Guest用户显示）
     if (roomInfo.yourRole !== 'guest') {
-        const replyButton = document.createElement('button');
-        replyButton.className = 'reply-btn';
-        replyButton.innerHTML = '↩';
-        replyButton.title = '回复此消息';
-        replyButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // 阻止事件冒泡到消息元素
-            setReplyTo({
-                senderId,
-                timestamp,
-                messageNumber,
-                text
-            });
+        messageEl.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            showMessageMenu(e.clientX, e.clientY, { senderId, timestamp, messageNumber, text });
         });
-        messageEl.appendChild(replyButton);
 
-        // 添加同步按钮
-        const syncButton = document.createElement('button');
-        syncButton.className = 'sync-btn';
-        syncButton.innerHTML = '➦';
-        syncButton.title = '同步此消息';
-        syncButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // 阻止事件冒泡到消息元素
-            showSyncDialog({
-                senderId,
-                timestamp,
-                messageNumber,
-                text
-            });
-        });
-        messageEl.appendChild(syncButton);
+        // 移动端长按
+        let _longPressTimer = null;
+        messageEl.addEventListener('touchstart', (e) => {
+            const t = e.touches[0];
+            _longPressTimer = setTimeout(() => {
+                showMessageMenu(t.clientX, t.clientY, { senderId, timestamp, messageNumber, text });
+            }, 500);
+        }, { passive: true });
+        messageEl.addEventListener('touchend', () => clearTimeout(_longPressTimer), { passive: true });
+        messageEl.addEventListener('touchmove', () => clearTimeout(_longPressTimer), { passive: true });
     }
 
     // 按时间戳插入消息到正确位置
@@ -449,9 +448,9 @@ function showSyncDialog(messageInfo) {
     dialog.className = 'sync-dialog';
 
     // 对话框标题
-    const title = document.createElement('h3');
+    const title = document.createElement('div');
     title.textContent = '选择同步目标';
-    title.style.marginBottom = '15px';
+    title.className = 'sync-title';
 
     // 用户列表容器
     const userListContainer = document.createElement('div');
@@ -632,4 +631,232 @@ async function syncMessage(messageInfo, targetUserIds) {
         debugLog('同步失败: ' + error.message);
         showNotification('同步失败: ' + error.message, 'error');
     }
+}
+
+// 消息右键上下文菜单
+let _activeMenu = null;
+
+function showMessageMenu(x, y, msgData) {
+    if (_activeMenu) _activeMenu.remove();
+
+    const menu = document.createElement('div');
+    menu.className = 'msg-context-menu';
+    _activeMenu = menu;
+
+    const items = [
+        { icon: 'reply', label: '回复', action: () => setReplyTo(msgData) },
+        { icon: 'share-2', label: '同步', action: () => showSyncDialog(msgData) },
+        { icon: 'layers', label: '批量同步', action: () => enterBatchSelectMode(msgData) },
+    ];
+
+    items.forEach(({ icon, label, action }) => {
+        const btn = document.createElement('button');
+        btn.className = 'msg-context-item';
+        btn.type = 'button';
+        btn.innerHTML = `<i data-lucide="${icon}" style="width:14px;height:14px;shrink:0"></i>${label}`;
+        btn.onclick = () => { menu.remove(); _activeMenu = null; action(); };
+        menu.appendChild(btn);
+    });
+
+    // 防止菜单超出视口
+    const vw = window.innerWidth, vh = window.innerHeight;
+    menu.style.left = (x + 160 > vw ? vw - 168 : x) + 'px';
+    menu.style.top  = (y + 80  > vh ? y - 88  : y) + 'px';
+
+    document.body.appendChild(menu);
+    if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [...menu.querySelectorAll('i')] });
+
+    const close = (e) => {
+        if (!menu.contains(e.target)) { menu.remove(); _activeMenu = null; document.removeEventListener('click', close); }
+    };
+    setTimeout(() => document.addEventListener('click', close), 0);
+}
+
+// ========================
+// 批量同步功能
+// ========================
+
+function enterBatchSelectMode(preselectedMsg) {
+    batchSelectMode = true;
+    batchSelectedMessages.clear();
+
+    DOM.batchSyncCancelBtn.classList.remove('hidden');
+    DOM.batchSyncBar.style.display = 'flex';
+    DOM.inputArea.style.display = 'none';
+
+    DOM.messages.style.paddingLeft = '2.5rem';
+
+    // 给每条消息添加复选框（绝对定位在左侧）
+    DOM.messages.querySelectorAll('.message').forEach(msgEl => {
+        const ts = msgEl.getAttribute('data-timestamp');
+        const sender = msgEl.getAttribute('data-sender-id');
+        if (!ts || !sender) return;
+
+        msgEl.style.position = 'relative';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'batch-select-cb';
+        cb.dataset.cacheKey = `${ts}_${sender}`;
+        cb.addEventListener('change', function() { onBatchCheckboxChange(this); });
+        msgEl.appendChild(cb);
+
+        msgEl.addEventListener('click', function batchClick(e) {
+            if (e.target === cb) return;
+            cb.checked = !cb.checked;
+            onBatchCheckboxChange(cb);
+            e._batchHandled = true;
+        });
+        msgEl._batchClickHandler = true;
+    });
+
+    // 预选触发消息
+    if (preselectedMsg) {
+        const key = `${preselectedMsg.timestamp}_${preselectedMsg.senderId}`;
+        const cb = DOM.messages.querySelector(`input[data-cache-key="${key}"]`);
+        if (cb) { cb.checked = true; onBatchCheckboxChange(cb); }
+    }
+
+    DOM.batchSyncCancelBtn.onclick = exitBatchSelectMode;
+    DOM.batchSelectAllBtn.onclick = toggleSelectAll;
+    DOM.batchSyncConfirmBtn.onclick = onBatchSyncConfirm;
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function exitBatchSelectMode() {
+    batchSelectMode = false;
+    batchSelectedMessages.clear();
+
+    DOM.messages.style.paddingLeft = '';
+    DOM.messages.querySelectorAll('.batch-select-cb').forEach(cb => cb.remove());
+    DOM.messages.querySelectorAll('.message').forEach(el => {
+        el.classList.remove('batch-selected');
+        el.style.position = '';
+    });
+
+    DOM.batchSyncCancelBtn.classList.add('hidden');
+    DOM.batchSyncBar.style.display = 'none';
+    DOM.inputArea.style.display = '';
+    updateBatchBar();
+}
+
+function onBatchCheckboxChange(cb) {
+    const key = cb.dataset.cacheKey;
+    const msgEl = cb.closest('.message');
+    if (cb.checked) {
+        batchSelectedMessages.add(key);
+        msgEl && msgEl.classList.add('batch-selected');
+    } else {
+        batchSelectedMessages.delete(key);
+        msgEl && msgEl.classList.remove('batch-selected');
+    }
+    updateBatchBar();
+}
+
+function toggleSelectAll() {
+    const cbs = DOM.messages.querySelectorAll('.batch-select-cb');
+    const allChecked = [...cbs].every(cb => cb.checked);
+    cbs.forEach(cb => {
+        cb.checked = !allChecked;
+        onBatchCheckboxChange(cb);
+    });
+}
+
+function updateBatchBar() {
+    const count = batchSelectedMessages.size;
+    DOM.batchSyncCount.textContent = `已选 ${count} 条`;
+    DOM.batchSyncConfirmBtn.disabled = count === 0;
+}
+
+async function onBatchSyncConfirm() {
+    if (batchSelectedMessages.size === 0) return;
+
+    // 收集选中消息的 messageInfo
+    const selectedInfos = [];
+    batchSelectedMessages.forEach(key => {
+        const cached = messageCache.get(key);
+        if (cached) selectedInfos.push(cached);
+    });
+
+    if (selectedInfos.length === 0) {
+        showNotification('无法获取选中消息内容（可能已超出缓存）', 'warning');
+        return;
+    }
+
+    exitBatchSelectMode();
+
+    // 复用现有的 showSyncDialog，但传入多条消息
+    showBatchSyncDialog(selectedInfos);
+}
+
+function showBatchSyncDialog(messageInfos) {
+    const overlay = document.createElement('div');
+    overlay.className = 'sync-overlay';
+
+    const dialog = document.createElement('div');
+    dialog.className = 'sync-dialog';
+
+    const title = document.createElement('div');
+    title.textContent = `选择同步目标（共 ${messageInfos.length} 条消息）`;
+    title.className = 'sync-title';
+
+    const userListContainer = document.createElement('div');
+    userListContainer.className = 'sync-user-list';
+
+    const otherUsers = Array.from(users.values()).filter(u => u.id !== userId);
+    if (otherUsers.length === 0) {
+        userListContainer.innerHTML = '<p style="text-align:center;color:#999;">没有其他用户</p>';
+    } else {
+        otherUsers.forEach(user => {
+            const label = document.createElement('label');
+            label.className = 'sync-user-item';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = user.id;
+            const name = document.createElement('span');
+            name.textContent = user.name;
+            name.className = 'sync-user-name';
+            const idSpan = document.createElement('span');
+            idSpan.textContent = ` [${user.id.slice(-8)}]`;
+            idSpan.className = 'sync-user-id';
+            label.append(cb, name, idSpan);
+            userListContainer.appendChild(label);
+        });
+    }
+
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'sync-dialog-buttons';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = '取消';
+    cancelBtn.className = 'sync-cancel-btn';
+    cancelBtn.onclick = () => document.body.removeChild(overlay);
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.textContent = `同步 ${messageInfos.length} 条`;
+    confirmBtn.className = 'sync-confirm-btn';
+    confirmBtn.onclick = async () => {
+        const selectedUserIds = Array.from(
+            dialog.querySelectorAll('input[type="checkbox"]:checked')
+        ).map(cb => cb.value);
+
+        if (selectedUserIds.length === 0) {
+            showNotification('请至少选择一个用户', 'warning');
+            return;
+        }
+        document.body.removeChild(overlay);
+
+        for (const info of messageInfos) {
+            await syncMessage(info, selectedUserIds);
+        }
+        showNotification(`已批量同步 ${messageInfos.length} 条消息给 ${selectedUserIds.length} 个用户`);
+    };
+
+    btnContainer.append(cancelBtn, confirmBtn);
+    dialog.append(title, userListContainer, btnContainer);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    overlay.onclick = (e) => { if (e.target === overlay) document.body.removeChild(overlay); };
 }

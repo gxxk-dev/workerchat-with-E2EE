@@ -133,33 +133,32 @@ function handleRoleChanged(data) {
     websocket.send(JSON.stringify({ type: 'getUsers' }));
 }
 
-// 处理邀请链接生成
-function handleInviteLinkGenerated(data) {
-    showNotification('邀请链接已生成');
-
-    // 显示邀请链接
-    const invite = data.invite;
+function buildInviteItemHtml(invite, fullUrl) {
     const expireText = invite.expiresAt ? new Date(invite.expiresAt).toLocaleString() : '永不过期';
     const usageText = invite.maxUsage ? `${invite.usageCount}/${invite.maxUsage}` : `${invite.usageCount}/无限`;
-
-    const linkHtml = `
-        <div class="invite-item" data-invite-id="${invite.id}">
-            <div class="invite-info">
-                <div class="invite-url" title="${data.fullUrl}">${data.fullUrl}</div>
-                <div class="invite-meta">
-                    角色: ${getRoleLabel(invite.role)} | 过期: ${expireText} | 使用: ${usageText}
-                </div>
+    return `
+        <div class="flex items-center gap-1.5 rounded-md bg-zinc-800/60 border border-zinc-700/60 px-2 py-1" data-invite-id="${invite.id}">
+            <div class="flex-1 min-w-0">
+                <p class="text-[0.625rem] text-zinc-400 leading-4 truncate">
+                    <span class="text-zinc-300">${getRoleLabel(invite.role)}</span>
+                    <span class="text-zinc-600 mx-0.5">|</span>${expireText}
+                    <span class="text-zinc-600 mx-0.5">|</span>${usageText}
+                </p>
             </div>
-            <div class="invite-actions">
-                <button onclick="copyInviteLink('${data.fullUrl}')">复制</button>
-                <button onclick="deleteInviteLink('${invite.id}')">删除</button>
+            <div class="flex shrink-0 gap-1">
+                <button onclick="copyInviteLink('${fullUrl}')" title="${fullUrl}" class="px-1.5 py-0.5 text-[0.625rem] rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-300">复制</button>
+                <button onclick="deleteInviteLink('${invite.id}')" class="px-1.5 py-0.5 text-[0.625rem] rounded bg-zinc-700 hover:bg-red-900/60 text-zinc-300 hover:text-red-300">删除</button>
             </div>
         </div>
     `;
+}
 
+// 处理邀请链接生成
+function handleInviteLinkGenerated(data) {
+    showNotification('邀请链接已生成');
     const inviteListEl = document.getElementById('inviteList');
     if (inviteListEl) {
-        inviteListEl.insertAdjacentHTML('afterbegin', linkHtml);
+        inviteListEl.insertAdjacentHTML('afterbegin', buildInviteItemHtml(data.invite, data.fullUrl));
     }
 }
 
@@ -203,31 +202,13 @@ function handleInviteLinks(data) {
     inviteListEl.innerHTML = '';
 
     if (data.links.length === 0) {
-        inviteListEl.innerHTML = '<div style="text-align: center; color: #999; padding: 10px;">暂无邀请链接</div>';
+        inviteListEl.innerHTML = '<p class="text-center text-xs text-zinc-500 py-2">暂无邀请链接</p>';
         return;
     }
 
     data.links.forEach(invite => {
-        const expireText = invite.expiresAt ? new Date(invite.expiresAt).toLocaleString() : '永不过期';
-        const usageText = invite.maxUsage ? `${invite.usageCount}/${invite.maxUsage}` : `${invite.usageCount}/无限`;
         const fullUrl = `${window.location.origin}/?r=${invite.roomId}&i=${invite.id}`;
-
-        const linkHtml = `
-            <div class="invite-item" data-invite-id="${invite.id}">
-                <div class="invite-info">
-                    <div class="invite-url" title="${fullUrl}">${fullUrl}</div>
-                    <div class="invite-meta">
-                        角色: ${getRoleLabel(invite.role)} | 过期: ${expireText} | 使用: ${usageText}
-                    </div>
-                </div>
-                <div class="invite-actions">
-                    <button onclick="copyInviteLink('${fullUrl}')">复制</button>
-                    <button onclick="deleteInviteLink('${invite.id}')">删除</button>
-                </div>
-            </div>
-        `;
-
-        inviteListEl.insertAdjacentHTML('beforeend', linkHtml);
+        inviteListEl.insertAdjacentHTML('beforeend', buildInviteItemHtml(invite, fullUrl));
     });
 }
 
@@ -298,73 +279,43 @@ function handlePermissionDenied(data) {
 // ========================
 
 // 转换房间类型
-function convertRoomType(targetType) {
-    if (!confirm(`确定要将房间转换为${getRoomTypeLabel(targetType)}吗？`)) return;
-
-    websocket.send(JSON.stringify({
-        type: 'convertRoomType',
-        targetType: targetType
-    }));
+async function convertRoomType(targetType) {
+    if (!await customConfirm(`确定要将房间转换为${getRoomTypeLabel(targetType)}吗？`)) return;
+    websocket.send(JSON.stringify({ type: 'convertRoomType', targetType }));
 }
 
 // 踢出用户
-function kickUser(targetUserId) {
+async function kickUser(targetUserId) {
     const targetUser = users.get(targetUserId);
     if (!targetUser) return;
-
-    const reason = prompt(`确定要踢出用户 ${targetUser.name} 吗？请输入原因（可选）：`);
-    if (reason === null) return; // 用户取消
-
-    websocket.send(JSON.stringify({
-        type: 'kickUser',
-        targetUserId: targetUserId,
-        reason: reason || undefined
-    }));
+    const reason = await customPrompt(`确定要踢出用户 ${targetUser.name} 吗？请输入原因（可选）：`);
+    if (reason === null) return;
+    websocket.send(JSON.stringify({ type: 'kickUser', targetUserId, reason: reason || undefined }));
 }
 
 // 封禁用户
-function banUser(targetUserId, banType) {
+async function banUser(targetUserId, banType) {
     const targetUser = users.get(targetUserId);
     if (!targetUser) return;
-
     const typeText = banType === 'ip' ? 'IP地址' : '密钥指纹';
-    const reason = prompt(`确定要封禁用户 ${targetUser.name} 的${typeText}吗？请输入原因（可选）：`);
-    if (reason === null) return; // 用户取消
-
-    websocket.send(JSON.stringify({
-        type: 'banUser',
-        targetUserId: targetUserId,
-        banType: banType,
-        reason: reason || undefined
-    }));
+    const reason = await customPrompt(`确定要封禁用户 ${targetUser.name} 的${typeText}吗？请输入原因（可选）：`);
+    if (reason === null) return;
+    websocket.send(JSON.stringify({ type: 'banUser', targetUserId, banType, reason: reason || undefined }));
 }
 
 // 解除封禁
-function unbanUser(banType, value) {
-    if (!confirm(`确定要解除此封禁吗？`)) return;
-
-    websocket.send(JSON.stringify({
-        type: 'unban',
-        banType: banType,
-        value: value
-    }));
-
-    // 刷新封禁列表
+async function unbanUser(banType, value) {
+    if (!await customConfirm(`确定要解除此封禁吗？`)) return;
+    websocket.send(JSON.stringify({ type: 'unban', banType, value }));
     setTimeout(() => getBanList(), 500);
 }
 
 // 修改用户角色
-function changeUserRole(targetUserId, newRole) {
+async function changeUserRole(targetUserId, newRole) {
     const targetUser = users.get(targetUserId);
     if (!targetUser) return;
-
-    if (!confirm(`确定要将 ${targetUser.name} 的角色变更为 ${getRoleLabel(newRole)} 吗？`)) return;
-
-    websocket.send(JSON.stringify({
-        type: 'changeRole',
-        targetUserId: targetUserId,
-        newRole: newRole
-    }));
+    if (!await customConfirm(`确定要将 ${targetUser.name} 的角色变更为 ${getRoleLabel(newRole)} 吗？`)) return;
+    websocket.send(JSON.stringify({ type: 'changeRole', targetUserId, newRole }));
 }
 
 // 生成邀请链接
@@ -390,19 +341,10 @@ function generateInviteLink() {
 }
 
 // 删除邀请链接
-function deleteInviteLink(inviteId) {
-    if (!confirm('确定要删除此邀请链接吗？')) return;
-
-    websocket.send(JSON.stringify({
-        type: 'deleteInviteLink',
-        inviteId: inviteId
-    }));
-
-    // 删除UI元素
-    const inviteItem = document.querySelector(`[data-invite-id="${inviteId}"]`);
-    if (inviteItem) {
-        inviteItem.remove();
-    }
+async function deleteInviteLink(inviteId) {
+    if (!await customConfirm('确定要删除此邀请链接吗？')) return;
+    websocket.send(JSON.stringify({ type: 'deleteInviteLink', inviteId }));
+    document.querySelector(`[data-invite-id="${inviteId}"]`)?.remove();
 }
 
 // 获取封禁列表
@@ -450,16 +392,11 @@ function updateMessageCountConfig() {
 }
 
 // 转让Creator身份
-function transferCreator(targetUserId) {
+async function transferCreator(targetUserId) {
     const targetUser = users.get(targetUserId);
     if (!targetUser) return;
-
-    if (!confirm(`确定要将Creator身份转让给 ${targetUser.name} 吗？此操作不可撤销！`)) return;
-
-    websocket.send(JSON.stringify({
-        type: 'transferCreator',
-        targetUserId: targetUserId
-    }));
+    if (!await customConfirm(`确定要将Creator身份转让给 ${targetUser.name} 吗？此操作不可撤销！`)) return;
+    websocket.send(JSON.stringify({ type: 'transferCreator', targetUserId }));
 }
 
 // 复制邀请链接

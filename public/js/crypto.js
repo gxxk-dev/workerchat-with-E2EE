@@ -17,7 +17,7 @@ function initializeMyKeyId(pubKey) {
     userFingerprint = getLongKeyId(pubKey);
     userName = pubKey.users[0]?.userID?.name || '匿名';
     userEmail = pubKey.users[0]?.userID?.email || '';
-    DOM.keyId.textContent = userFingerprint;
+    setKeyIdDisplay(userFingerprint);
     hasInitializedKeyId = true;
 
     debugLog(`密钥指纹已初始化(Long Key ID): ${userFingerprint}`);
