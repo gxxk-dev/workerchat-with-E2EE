@@ -9,6 +9,7 @@
         "@highlightjs/cdn-assets": "11.9.0",
         "@tailwindcss/cli": "^4.2.2",
         "dompurify": "3.0.8",
+        "jiti": "^2.6.1",
         "lucide": "0.475.0",
         "marked": "11.0.0",
         "openpgp": "^6.2.0",
