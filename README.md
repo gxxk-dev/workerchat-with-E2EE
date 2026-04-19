@@ -20,7 +20,17 @@
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/gxxk-dev/workerchat-with-E2EE.git)
 
 ### 本地运行
-`git clone`后`npm run dev`即可运行
+
+```bash
+git clone https://github.com/gxxk-dev/workerchat-with-E2EE.git
+cd workerchat-with-E2EE
+bun install
+bun run build:vendor   # 构建第三方库到 public/vendor/
+bun run build:css      # 构建 Tailwind CSS 到 public/styles.css
+bun run dev
+```
+
+> **注意**：`public/vendor/` 和 `public/styles.css` 不在版本控制中，每次克隆后必须先执行构建步骤。
 
 ## 💻 使用说明
 
